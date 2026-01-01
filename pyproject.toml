@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microinx"
+version = "1.0.0"
+description = "MicroInX v1.0 (deterministic BladeInsight engine + adapter + demo wrapper)"
+requires-python = ">=3.8"
+readme = "PACKAGING.md"
+license = {text = "Proprietary"}
+authors = [{name = "MicroInX"}]
+dependencies = []
+
+[project.scripts]
+# Stable console surface: runs the existing one-command demo.
+microinx-demo = "microinx.cli:main"
+
+[tool.setuptools]
+# Keep existing v1.0 module surfaces as top-level py_modules (no refactor).
+py-modules = [
+  "microinx_engine",
+  "microinx_run",
+  "microinx_api",
+  "microinx_demo",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Ship manifest + templates as package data so installed wheels work.
+"microinx" = ["data/*.json", "py.typed"]
