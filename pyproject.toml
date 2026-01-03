@@ -13,21 +13,12 @@ authors = [{name = "MicroInX"}]
 dependencies = []
 
 [project.scripts]
-# Stable console surface: runs the existing one-command demo.
-microinx-demo = "microinx.cli:main"
-
-[tool.setuptools]
-# Keep existing v1.0 module surfaces as top-level py_modules (no refactor).
-py-modules = [
-  "microinx_engine",
-  "microinx_run",
-  "microinx_api",
-  "microinx_demo",
-]
+# Stable console surface: runs the one-command demo.
+microinx-demo = "microinx.demo:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-# Ship manifest + templates as package data so installed wheels work.
+# Wheel-safe: ship manifest + templates inside the installed package.
 "microinx" = ["data/*.json", "py.typed"]

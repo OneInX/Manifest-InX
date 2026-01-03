@@ -9,7 +9,7 @@ This document freezes the external contract for the MicroInX Integration Adapter
 Response (200):
 
 - `status` (string) — always `"ok"`
-- `version` (string) — release version from `microinx_manifest_v1.json`
+- `version` (string) — release version from the MicroInX manifest
 
 ### POST /insight
 

@@ -1,31 +1,75 @@
-# engine.py
+# src/microinx/engine.py
 # MicroInX Engine v1.0 — minimal deterministic skeleton (Sprint 1, low-compute)
 
 from __future__ import annotations
 
+import json
+import os
 import re
+import hashlib
+import importlib.resources as ilr
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-# --- Canonical template surface (v0.3) ---
-TEMPLATES: Dict[str, str] = {
-    "T01": "You defer by widening input until signal collapses. Narrow input doesn’t prevent single-channel collapse.",
-    "T02": "You degrade reference by letting definition expand without constraint. A frozen frame doesn’t stop scope creep.",
-    "T03": "You gate action behind unreachable precision. A minimum gate still blocks action.",
-    "T04": "You displace the primary node into secondary output. Primary node lock is absent.",
-    "T05": "You hold control bandwidth fixed and leave output uncapped. Uncapped output guarantees spillover.",
-    "T06": "You prioritize the milestone while prerequisites remain unverified. Unverified prerequisites produce rework.",
-    "T07": "You hold a pathway open; a trigger re-enters and recurrence persists. An unbroken trigger keeps recurrence alive.",
-    "T08": "You loop because the stop condition is undefined or unstable. An undefined stop condition sustains recurrence.",
-    "T09": "You hold competing constraints and adjacent decisions diverge. A competing constraint rule drives divergence.",
-    "T10": "You diverge interpretations under one label. Coherence degrades when one label carries multiple interpretations.",
-    "T11": "You defer by letting a weak definition trigger repeated interpretation. An unfrozen definition regenerates recurrence.",
-    "T12": "You gate entry above the minimum; recurrence persists. An entry gate above minimum sustains recurrence.",
-    "T13": "You prioritize parallel output; constraints diverge. Without one rule, divergence is guaranteed.",
-    "T14": "You hold scope open and the primary node degrades; action defers. A hard boundary doesn’t release action.",
-    "T15": "You prioritize output without a lock window; rework is the default. Without a lock window and rate limit, rework persists.",
-}
+# --- Canonical templates (v0.3) loaded from package data (src/microinx/data/templates_v0_3.json) ---
+# Continuity rule: engine derives template_id → text from the packaged canonical file.
+# Optional integrity: if MICROINX_TEMPLATES_SHA256 is set, engine refuses to run on mismatch.
+
+TEMPLATE_DATA_PKG = "microinx.data"
+TEMPLATE_DATA_FILE = "templates_v0_3.json"
+
+_TEMPLATES_CACHE: Optional[Dict[str, str]] = None
+
+
+def _sha256_hex(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def _load_templates_bytes() -> bytes:
+    # Primary: packaged resource (installed / editable installs)
+    try:
+        return ilr.files(TEMPLATE_DATA_PKG).joinpath(TEMPLATE_DATA_FILE).read_bytes()
+    except Exception:
+        # Fallback: local working directory (dev convenience)
+        return Path(TEMPLATE_DATA_FILE).read_bytes()
+
+
+def load_templates_v03() -> Dict[str, str]:
+    raw = _load_templates_bytes()
+
+    expected = os.environ.get("MICROINX_TEMPLATES_SHA256", "").strip()
+    if expected and _sha256_hex(raw) != expected:
+        raise RuntimeError("Canonical templates hash mismatch")
+
+    obj = json.loads(raw.decode("utf-8"))
+
+    # Accept either {"T01": "...", ...} or a list of items with id/text.
+    templates: Dict[str, str] = {}
+    if isinstance(obj, dict):
+        templates = {str(k): str(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        for it in obj:
+            if not isinstance(it, dict):
+                continue
+            tid = it.get("template_id") or it.get("id") or it.get("tid")
+            txt = it.get("text") or it.get("template") or it.get("output_text")
+            if tid and txt:
+                templates[str(tid)] = str(txt)
+
+    if len(templates) != 15:
+        raise RuntimeError("Canonical templates parse failed")
+
+    return templates
+
+
+def get_templates() -> Dict[str, str]:
+    global _TEMPLATES_CACHE
+    if _TEMPLATES_CACHE is None:
+        _TEMPLATES_CACHE = load_templates_v03()
+    return _TEMPLATES_CACHE
+
 
 VECTORS = ("drift", "avoidance", "drive", "loop", "fracture")
 TIEBREAK = ("fracture", "avoidance", "loop", "drift", "drive")
@@ -143,7 +187,10 @@ FRACTURE_PHRASES = [
 ]
 
 # Word markers (+1 per token hit)
-DRIFT_WORDS = {"later", "eventually", "someday", "after", "tomorrow", "once", "when", "scope", "depends", "context", "research"}
+DRIFT_WORDS = {
+    "later", "eventually", "someday", "after", "tomorrow", "once", "when",
+    "scope", "depends", "context", "research"
+}
 AVOID_WORDS = {"perfect", "exact", "certainty", "guarantee", "proof", "until", "must", "instead", "secondary"}
 DRIVE_WORDS = {"asap", "now", "today", "ship", "launch", "push", "fast", "rush", "deadline", "skip", "ignore"}
 LOOP_WORDS = {"again", "keep", "still", "same", "repeat", "restart", "revisit", "stuck"}
@@ -262,18 +309,40 @@ def score_vectors(signals: ExtractedSignals, raw_text: str) -> MappedVectors:
     return MappedVectors(dominant=dominant, secondary=secondary, composite=composite, confidence=confidence)
 
 
-def select_template(vectors: MappedVectors, signals: ExtractedSignals) -> str:
+def select_template(vectors: MappedVectors, signals: ExtractedSignals, raw_text: str) -> str:
+    """Deterministic template selector.
+
+    Composites select directly.
+    Dominant vectors deterministically choose between the 2 per-vector variants.
+    """
     if vectors.composite:
         return COMPOSITE_TO_TEMPLATE[vectors.composite]
 
-    primary, _fallback = DOMINANT_TO_TEMPLATE[vectors.dominant]
+    primary, variant = DOMINANT_TO_TEMPLATE[vectors.dominant]
+
+    # Global low-score fallback.
     if signals.scores.get(vectors.dominant, 0) < 3:
         return "T02"
+
+    t = (raw_text or "").lower()
+
+    # Variant selection is intentionally simple + deterministic (no RNG, no time, no external state).
+    if vectors.dominant == "drift" and ("scope" in t or "definition" in t):
+        return variant
+    if vectors.dominant == "avoidance" and ("secondary" in t or "instead" in t):
+        return variant
+    if vectors.dominant == "drive" and ("skip" in t or "ignore" in t or "uncapped" in t):
+        return variant
+    if vectors.dominant == "loop" and ("trigger" in t or "back to" in t or "pathway" in t):
+        return variant
+    if vectors.dominant == "fracture" and ("constraint" in t or "competing" in t or "rule" in t):
+        return variant
+
     return primary
 
 
 def render_output(template_id: str) -> str:
-    return TEMPLATES[template_id]
+    return get_templates()[template_id]
 
 
 # --- SDT gate v1.0 (minimum set) ---
@@ -331,7 +400,10 @@ _HARD_BAN_PATTERNS = [
     r"\bhaha\b",
     r"ㅋㅋ",
 ]
-_REVIEW_FLAG_PATTERNS = [r"\bmust\b", r"\bbest\b", r"\bbetter\b", r"\bworse\b", r"\bideal(ly)?\b", r"\bgood\b", r"\bbad\b", r"\bwe\b", r"\bi\b"]
+_REVIEW_FLAG_PATTERNS = [
+    r"\bmust\b", r"\bbest\b", r"\bbetter\b", r"\bworse\b", r"\bideal(ly)?\b",
+    r"\bgood\b", r"\bbad\b", r"\bwe\b", r"\bi\b"
+]
 _EMOTICONS = (":)", ":(", ";)")
 
 
@@ -346,10 +418,12 @@ def _contains_emoji(s: str) -> bool:
 def sdt_gate(output_text: str, template_id: str) -> Dict[str, Any]:
     violations: List[str] = []
 
-    if template_id not in TEMPLATES:
+    templates = get_templates()
+
+    if template_id not in templates:
         return {"pass": False, "violations": ["TEMPLATE_ID_UNKNOWN"]}
 
-    if output_text != TEMPLATES[template_id]:
+    if output_text != templates[template_id]:
         violations.append("EXACT_TEMPLATE_MISMATCH")
 
     sent_n = _count_sentences(output_text)
@@ -402,7 +476,7 @@ def generate_blade_insight(minimal_user_signal: Dict[str, Any]) -> Dict[str, Any
     signals = extract_signals(minimal_user_signal)
     raw = (minimal_user_signal or {}).get("raw_text", "") or ""
     vectors = score_vectors(signals, raw_text=raw)
-    template_id = select_template(vectors, signals)
+    template_id = select_template(vectors, signals, raw_text=raw)
     output_text = render_output(template_id)
     sdt = sdt_gate(output_text, template_id)
     return {

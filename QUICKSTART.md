@@ -2,23 +2,23 @@
 
 Minimal, deterministic Blade Insight generator (non-generative).
 
-## Files
+## Where files live (current repo layout)
 
-Runtime requires (manifest-locked):
-- `microinx_run.py`
-- `microinx_engine.py`
-- `templates_v0_3.json`
-- `microinx_manifest_v1.json`
+Package code:
+- `src/microinx/engine.py`
+- `src/microinx/run.py`
 
-## Install / Run (local)
+Package data (manifest-locked):
+- `src/microinx/data/templates_v0_3.json`
+- `src/microinx/data/microinx_manifest_v1.json`
 
-No packaging assumptions. Run from a directory containing the files above.
+## Run (repo)
 
 ### Callable
 
 ```python
-import microinx_run
+from microinx.run import microinx_run
 
-out = microinx_run.microinx_run("later.")
+out = microinx_run("later.")
 # -> {"template_id": "...", "output_text": "...", "sdt": {"pass": True, "violations": [...]}}
 print(out)

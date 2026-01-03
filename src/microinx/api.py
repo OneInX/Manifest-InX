@@ -1,4 +1,4 @@
-# api.py
+# src/microinx/api.py
 # MicroInX — Integration Adapter v1.0 (Sprint 4)
 # Minimal local JSON API wrapper. No engine logic changes.
 
@@ -16,16 +16,40 @@ try:
 except Exception:  # pragma: no cover
     from http.server import HTTPServer as _HTTPServer
 
+from importlib import resources as _ir
+
 # Existing deterministic entrypoint (Release Candidate Pack)
-import microinx.run as run
+from microinx import run as microinx_run
 
 
-MANIFEST_PATH = os.environ.get("MICROINX_MANIFEST_PATH", "microinx_manifest_v1.json")
+_MANIFEST_ENV = "MICROINX_MANIFEST_PATH"
+_DEFAULT_MANIFEST_NAME = "microinx_manifest_v1.json"
 
 
-def _read_manifest_version(path: str = MANIFEST_PATH) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        m = json.load(f)
+def _load_manifest_json() -> dict:
+    # Prefer explicit env path.
+    p = os.environ.get(_MANIFEST_ENV)
+    if p and os.path.exists(p):
+        with open(p, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    # Next, working-directory file.
+    if os.path.exists(_DEFAULT_MANIFEST_NAME):
+        with open(_DEFAULT_MANIFEST_NAME, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    # Finally, packaged resource under microinx/data/.
+    try:
+        with (_ir.files("microinx") / "data" / _DEFAULT_MANIFEST_NAME).open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        # Compatibility fallback
+        with _ir.open_text("microinx", os.path.join("data", _DEFAULT_MANIFEST_NAME), encoding="utf-8") as f:
+            return json.load(f)
+
+
+def _read_manifest_version() -> str:
+    m = _load_manifest_json()
     v = m.get("version")
     if not isinstance(v, str) or not v:
         raise RuntimeError("manifest missing version")
@@ -41,7 +65,7 @@ def verify_release_or_raise() -> str:
     Raises:
       RuntimeError if any manifest hash mismatch occurs.
     """
-    run.verify_release()
+    microinx_run.verify_release()
     return _read_manifest_version()
 
 
@@ -69,10 +93,7 @@ class MicroInXAPIHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
             return
 
-        self._send_json(
-            HTTPStatus.OK,
-            {"status": "ok", "version": self._release_version},
-        )
+        self._send_json(HTTPStatus.OK, {"status": "ok", "version": self._release_version})
 
     def do_POST(self) -> None:  # noqa: N802
         if self.path != "/insight":
@@ -98,7 +119,7 @@ class MicroInXAPIHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            r = run.run(text)
+            r = microinx_run.microinx_run(text)
         except Exception as e:
             # minimal error surface; do not add new semantics
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "engine_error", "detail": str(e)})
@@ -123,7 +144,7 @@ def make_server(host: str = "127.0.0.1", port: int = 8080) -> _HTTPServer:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="api")
+    ap = argparse.ArgumentParser(prog="microinx-api")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8080)
     args = ap.parse_args(argv)

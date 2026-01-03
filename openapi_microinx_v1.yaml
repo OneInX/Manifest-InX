@@ -12,8 +12,7 @@ info:
     and refuses to serve if any required file hash mismatches.
 
     Note: manifest-hash mismatch is a server refusal (startup failure), not an HTTP
-    response in v1.0. This contract includes a stable error shape for that refusal
-    as a vendor extension under components.
+    response in v1.0. This contract includes a stable refusal shape in components.
 servers:
   - url: http://127.0.0.1:8080
 paths:
@@ -120,10 +119,8 @@ components:
       properties:
         template_id:
           type: string
-          description: Selected template ID (T01..T15).
         output_text:
           type: string
-          description: Exact canonical template text for template_id.
         sdt:
           $ref: "#/components/schemas/SDTResult"
         manifest:
@@ -172,7 +169,7 @@ components:
         detail:
           type: string
 
-    # Vendor extension: stable refusal shape for startup integrity failure.
+    # Stable refusal shape for startup integrity failure.
     # This is not an HTTP response in v1.0; the server refuses to start.
     ManifestRefusal:
       type: object

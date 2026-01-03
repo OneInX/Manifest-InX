@@ -1,6 +1,3 @@
-# Ensure both root copies (release-dir) and packaged copies (installed) are included in sdists.
-include templates_v0_3.json
-include microinx_manifest_v1.json
 recursive-include src/microinx/data *.json
 
 # Optional: ship contract/demo docs alongside source dist.

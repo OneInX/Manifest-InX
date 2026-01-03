@@ -25,4 +25,4 @@ Any intentional behavior change requires:
 From repo root:
 
 ```bash
-python -m unittest -q test_microinx_golden_regression.py
+python -m unittest -q tests/test_microinx_golden_regression.py

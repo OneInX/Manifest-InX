@@ -1,12 +1,12 @@
 {
+  "version": "1.0.0",
   "files": {
-    "microinx_engine.py": "7616d51b9217a6af06324d48f5f1de8843dd8147d1fd0063c102c556e1a93dad",
-    "microinx_run.py": "a0f47ff1fd2ab332ce8f0d5a58e1097ad18c6c7e3559dddc609e0d54a951b648",
-    "templates_v0_3.json": "105c364510a1bbf4eeb2e90ad4eb211c2796df58e61de8123c2e862d37b813f6"
+    "engine.py": "1e05cdeba338b0ad1ac9e136cebbb475f2eed09894d4ca021c940c157d4b5f2f",
+    "run.py": "cd3579be8c519cd6e07b3d491beb66cbfc9ce9489fb074c9739e14ee261454e3",
+    "data/templates_v0_3.json": "cc19b9b2050958a989cf9c60d54b285c02e38817da2511ab6a6fd16b482fa275"
   },
   "sdt_rules": {
-    "location": "microinx_engine.py",
+    "location": "engine.py",
     "note": "SDT gate is embedded in engine for v1.0.0; no separate rules file."
-  },
-  "version": "1.0.0"
+  }
 }

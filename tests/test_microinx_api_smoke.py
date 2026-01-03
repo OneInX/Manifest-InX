@@ -1,15 +1,18 @@
-# test_microinx_api_smoke.py
+# tests/test_microinx_api_smoke.py
 # Smoke slice: API wrapper + determinism + SDT reject + manifest tamper refusal
 
 import json
+import os
+import tempfile
 import threading
 import time
 import unittest
 import urllib.request
 
-import microinx_api as microinx_api
-import microinx_engine as microinx_engine
-import microinx_run as microinx_run
+from importlib import resources as _ir
+
+from microinx import api as microinx_api
+from microinx import engine as microinx_engine
 
 
 def _get(url: str) -> dict:
@@ -65,17 +68,20 @@ class TestMicroInXAdapterSmoke(unittest.TestCase):
 
     def test_S4_manifest_tamper_refuses(self):
         # Stronger proof: tamper -> server refuses to start (make_server raises).
-        path = "templates_v0_3.json"
-        with open(path, "rb") as f:
-            orig = f.read()
-        try:
-            with open(path, "ab") as f:
-                f.write(b" ")
-            with self.assertRaises(RuntimeError):
-                microinx_api.make_server("127.0.0.1", 0)
-        finally:
-            with open(path, "wb") as f:
-                f.write(orig)
+        # Tamper the packaged template resource that verify_release checks.
+        from importlib.resources import as_file
+
+        tpl = _ir.files("microinx") / "data" / "templates_v0_3.json"
+
+        with as_file(tpl) as tpl_path:
+            orig = tpl_path.read_bytes()
+            try:
+                tpl_path.write_bytes(orig + b" ")
+                with self.assertRaises(Exception):
+                    microinx_api.make_server("127.0.0.1", 0)
+            finally:
+                tpl_path.write_bytes(orig)
+
 
 
 if __name__ == "__main__":

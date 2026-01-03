@@ -1,4 +1,4 @@
-# demo.py
+# src/microinx/demo.py
 # MicroInX — One-Command Demo Pack v1.0 (Sprint 6)
 # Wrapper only: verifies release, starts local API server, sends one demo request, prints response, exits.
 # No engine/mapping/SDT/template/manifest/contract changes.
@@ -13,8 +13,8 @@ import time
 import urllib.request
 from typing import Any, Dict
 
-import microinx.api as api
-import microinx.run as run
+from . import api as microinx_api
+from . import run as microinx_run
 
 
 HOST_DEFAULT = "127.0.0.1"
@@ -25,6 +25,12 @@ PORT_DEFAULT = 8080  # fixed default demo port (matches the v1.0 OpenAPI server 
 # - MICROINX_DEMO_PORT
 
 DEMO_INPUT_TEXT = "Need more context and more research; later it depends. I revisit again and still."
+
+
+def main() -> int:
+    r = run_demo()  # keep existing demo semantics
+    print(json.dumps(r, ensure_ascii=False, sort_keys=True, indent=2))
+    return 0
 
 
 def _post_json(url: str, payload: dict) -> dict:
@@ -42,9 +48,9 @@ def _post_json(url: str, payload: dict) -> dict:
 def verify_release() -> str:
     """Verify release integrity (manifest hashes) and return release version."""
     # Strong gate (refuses on any hash mismatch).
-    run.verify_release()
+    microinx_run.verify_release()
     # Stable version string from manifest.
-    return api.verify_release_or_raise()
+    return microinx_api.verify_release_or_raise()
 
 
 def run_demo(host: str = HOST_DEFAULT, port: int = PORT_DEFAULT) -> Dict[str, Any]:
@@ -55,7 +61,7 @@ def run_demo(host: str = HOST_DEFAULT, port: int = PORT_DEFAULT) -> Dict[str, An
     # Explicit preflight: verify manifest before starting server.
     _ = verify_release()
 
-    httpd = api.make_server(host, port)
+    httpd = microinx_api.make_server(host, port)
     srv_host, srv_port = httpd.server_address
     base = f"http://{srv_host}:{srv_port}"
 

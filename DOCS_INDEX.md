@@ -17,6 +17,7 @@
 - **MicroInX Distribution Pack v1.0** (`MicroInX Distribution Pack v1.0.md`) — Installable package + console entrypoint (`microinx-demo`).
 - **MicroInX CI Smoke Pack v1.0** (`MicroInX CI Smoke Pack v1.0.md`) — GitHub Actions workflow for deterministic smoke validation.
 - **MicroInX Golden Regression Pack v1.0** (`MicroInX Golden Regression Pack v1.0.md`) — Golden cases + exact-match regression lock.
+- **MicroInX Repo Index Pack v1.0** (`MicroInX Repo Index Pack v1.0.md`) — Root README + docs index for navigation.
 
 ## Run Order
 

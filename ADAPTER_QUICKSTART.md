@@ -3,4 +3,4 @@
 ## Run locally
 
 ```bash
-python microinx_api.py --host 127.0.0.1 --port 8080
+python -m microinx.api --host 127.0.0.1 --port 8080

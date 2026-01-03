@@ -5,11 +5,13 @@
 import json
 import os
 import unittest
+from pathlib import Path
 
-import microinx_run as microinx_run
+import microinx
+from microinx.run import microinx_run
 
 
-GOLDEN_PATH = "golden_cases_v1.json"
+GOLDEN_PATH = Path(microinx.__file__).resolve().parent / "data" / "golden_cases_v1.json"
 
 
 class TestMicroInXGoldenRegressionV1(unittest.TestCase):
@@ -37,7 +39,7 @@ class TestMicroInXGoldenRegressionV1(unittest.TestCase):
         exp_v = c["expected_sdt_violations"]
 
         if exp_pass:
-            r = microinx_run.microinx_run(c["input_text"], lang="auto", source="chat")
+            r = microinx_run(c["input_text"], lang="auto", source="chat")
             self.assertEqual(r["template_id"], exp_tid)
             self.assertEqual(r["output_text"], exp_out)
             self.assertEqual(r["sdt"]["pass"], exp_pass)
@@ -47,14 +49,21 @@ class TestMicroInXGoldenRegressionV1(unittest.TestCase):
         # SDT rejection case: dev-only integrity hook.
         # Packaging/module paths may change; the public stable entrypoint is microinx_run.microinx_run.
         # Enable this check only when explicitly requested:
-        #   MICROINX_DEV_INTEGRITY=1 python -m unittest -q test_microinx_golden_regression.py
+        # PowerShell:
+#   $env:MICROINX_DEV_INTEGRITY="1"; python -m unittest -q tests/test_microinx_golden_regression.py
+# CMD:
+#   set MICROINX_DEV_INTEGRITY=1&& python -m unittest -q tests/test_microinx_golden_regression.py
+# Bash:
+#   MICROINX_DEV_INTEGRITY=1 python -m unittest -q tests/test_microinx_golden_regression.py
         if os.getenv("MICROINX_DEV_INTEGRITY", "") != "1":
             self.skipTest("dev-only integrity hook disabled (set MICROINX_DEV_INTEGRITY=1 to run)")
 
+        import importlib
+
         try:
-            import microinx_engine  # dev-only hook; not part of the stable public surface
+            microinx_engine = importlib.import_module("microinx.engine")  # dev-only hook; not part of the stable public surface
         except Exception as e:
-            raise RuntimeError("dev-only integrity hook unavailable: cannot import microinx_engine") from e
+            raise RuntimeError("dev-only integrity hook unavailable: cannot import microinx.engine") from e
 
         s = microinx_engine.sdt_gate(exp_out, exp_tid)
         self.assertEqual(s["pass"], exp_pass)

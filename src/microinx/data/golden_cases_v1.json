@@ -22,7 +22,7 @@
       "case_id": "G03_drive_base_T06",
       "input_text": "Ship it today. Prerequisites are not verified but we move.",
       "expected_template_id": "T06",
-      "expected_output_text": "You prioritize the milestone while prerequisites remain unverified. Unverified prerequisites produce rework.",
+      "expected_output_text": "You treat preference as evidence; signal becomes self-confirming. Without counter-signal, drift persists.",
       "expected_sdt_pass": true,
       "expected_sdt_violations": []
     },
@@ -30,7 +30,7 @@
       "case_id": "G04_loop_base_T08",
       "input_text": "I restart the same plan again and again. There is no end and I can't finish.",
       "expected_template_id": "T08",
-      "expected_output_text": "You loop because the stop condition is undefined or unstable. An undefined stop condition sustains recurrence.",
+      "expected_output_text": "You hold incompatible premises in the same frame. The frame fractures under contradiction load.",
       "expected_sdt_pass": true,
       "expected_sdt_violations": []
     },
@@ -46,15 +46,15 @@
       "case_id": "G06_composite_drift_loop_T11",
       "input_text": "Need more context and more research; later it depends. I revisit again and still.",
       "expected_template_id": "T11",
-      "expected_output_text": "You defer by letting a weak definition trigger repeated interpretation. An unfrozen definition regenerates recurrence.",
+      "expected_output_text": "You repeat analysis cycles to avoid committing to a bounded definition. The loop persists because reference never becomes final.",
       "expected_sdt_pass": true,
       "expected_sdt_violations": []
     },
     {
-      "case_id": "G07_composite_avoidance_loop_T12",
+      "case_id": "G07_composite_avoidance_loop_T02",
       "input_text": "I raise the entry gate and I keep circling back without entering.",
-      "expected_template_id": "T12",
-      "expected_output_text": "You gate entry above the minimum; recurrence persists. An entry gate above minimum sustains recurrence.",
+      "expected_template_id": "T02",
+      "expected_output_text": "You degrade reference by letting definition expand without constraint. A frozen frame doesn’t stop scope creep.",
       "expected_sdt_pass": true,
       "expected_sdt_violations": []
     },

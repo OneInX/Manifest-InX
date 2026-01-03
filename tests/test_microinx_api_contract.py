@@ -7,7 +7,7 @@ import time
 import unittest
 import urllib.request
 
-import microinx_api as microinx_api
+from microinx import api as microinx_api
 
 
 def _get(url: str) -> dict:
