@@ -1,0 +1,8 @@
+# Force consistent line endings across platforms (CI is Linux/LF)
+* text=auto eol=lf
+
+*.py   text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
