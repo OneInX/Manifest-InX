@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microinx"
-version = "1.0.1"
+version = "1.0.2"
 description = "MicroInX v1.0 (deterministic BladeInsight engine + adapter + demo wrapper)"
 requires-python = ">=3.8"
 readme = "PACKAGING.md"

@@ -58,4 +58,4 @@ python -m unittest -q \
 
 ## Version
 
-- v1.0.0
+- "v1.0.x" / "current release line"

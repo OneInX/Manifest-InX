@@ -1,5 +1,5 @@
 # src/microinx/run.py
-# MicroInX Release Candidate Entrypoint v1.0.0
+# MicroInX Release Candidate Entrypoint v1.0.x.
 #
 # Deterministic callable + minimal CLI wrapper.
 # Refuses to run if release hash manifest verification fails.

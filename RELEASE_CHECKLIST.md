@@ -80,4 +80,4 @@ Confirm `DOCS_INDEX.md` lists: RC, Adapter, Contract, Demo, Distribution, CI, Go
 
 ### 8) Optional tag
 
-- `git tag v1.0.1`
+- `git tag v1.0.x`

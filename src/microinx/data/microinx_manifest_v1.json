@@ -1,12 +1,12 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "files": {
     "engine.py": "1e05cdeba338b0ad1ac9e136cebbb475f2eed09894d4ca021c940c157d4b5f2f",
-    "run.py": "cd3579be8c519cd6e07b3d491beb66cbfc9ce9489fb074c9739e14ee261454e3",
-    "data/templates_v0_3.json": "cc19b9b2050958a989cf9c60d54b285c02e38817da2511ab6a6fd16b482fa275"
+    "run.py": "0b4a46ed56bcdc4b631de9486d564312524f480426491346cacceb1951141c5a",
+    "data/templates_v0_3.json": "1320410ffbe49af3bf9b18d3261c973de5e7f02422a4d942351a324a1a8cd0a0"
   },
   "sdt_rules": {
     "location": "engine.py",
-    "note": "SDT gate is embedded in engine for v1.0.0; no separate rules file."
+    "note": "SDT gate is embedded in engine for v1.0.2; no separate rules file."
   }
 }

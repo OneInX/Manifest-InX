@@ -1,4 +1,4 @@
-# MicroInX v1.0.0 — Quickstart
+# MicroInX v1.0.x — Quickstart
 
 Minimal, deterministic Blade Insight generator (non-generative).
 

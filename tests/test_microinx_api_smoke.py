@@ -10,9 +10,22 @@ import unittest
 import urllib.request
 
 from importlib import resources as _ir
+try:
+    from importlib.metadata import version as _dist_version  # py3.8+
+except Exception:  # pragma: no cover
+    _dist_version = None
 
 from microinx import api as microinx_api
 from microinx import engine as microinx_engine
+
+
+def _expected_version() -> str:
+    # Prefer installed distribution version (works in CI / editable installs)
+    if _dist_version is not None:
+        return _dist_version("microinx")
+    # Fallback: if you expose microinx.__version__
+    import microinx
+    return getattr(microinx, "__version__", "0.0.0")
 
 
 def _get(url: str) -> dict:
@@ -46,7 +59,7 @@ class TestMicroInXAdapterSmoke(unittest.TestCase):
     def test_S1_health(self):
         r = _get(self.base + "/health")
         self.assertEqual(r["status"], "ok")
-        self.assertEqual(r["version"], "1.0.0")
+        self.assertEqual(r["version"], _expected_version())
 
     def test_S2_insight_deterministic(self):
         payload = {"text": "Need more context and more research; later it depends. I revisit again and still."}
