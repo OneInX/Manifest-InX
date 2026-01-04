@@ -38,33 +38,18 @@ jobs:
         run: |
           python -m pip install -e . --no-deps
 
-      - name: Fast deterministic tests (explicit; limited discovery)
+      - name: Fast deterministic tests (explicit)
         env:
           PYTHONUTF8: "1"
         run: |
-          python -m pip install -e . --no-deps
+          python -m unittest -q tests/test_microinx_engine.py
+          python -m unittest -q tests/test_microinx_api_smoke.py
+          python -m unittest -q tests/test_microinx_api_contract.py
+          python -m unittest -q tests/test_microinx_demo_smoke.py
+          python -m unittest -q tests/test_microinx_golden_regression.py
 
-python -m unittest -q discover -s tests -p "test_microinx_engine.py"
-python -m unittest -q discover -s tests -p "test_microinx_api_smoke.py"
-python -m unittest -q discover -s tests -p "test_microinx_api_contract.py"
-python -m unittest -q discover -s tests -p "test_microinx_demo_smoke.py"
-
-MICROINX_DEMO_PORT=0 microinx-demo`
-- Parses the printed JSON and asserts the stable envelope keys.
-
-No external network calls are required by MicroInX itself; the checks exercise only local engine + local HTTP server.
-
-## Run the same checks locally
-
-From repo root:
-
-```bash
-python -m pip install -e . --no-deps
-
-python -m unittest -q \
-  test_microinx_engine.py \
-  test_microinx_api_smoke.py \
-  test_microinx_api_contract.py \
-  test_microinx_demo_smoke.py
-
-MICROINX_DEMO_PORT=0 microinx-demo
+      - name: One-command demo (ephemeral port)
+        env:
+          MICROINX_DEMO_PORT: "0"
+        run: |
+          microinx-demo

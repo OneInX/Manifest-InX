@@ -19,3 +19,13 @@ Behavioral invariants:
 - Manifest integrity refusal: runtime/serve path refuses when any required file hash mismatches the release manifest.
 - SDT gate: outputs fail SDT on forbidden tokens, interrogatives, emoji/emoticons, or length violations.
 - Template fidelity: selected `template_id` maps to an exact canonical template string (exact-match enforcement).
+
+## v1.0.1
+
+- R01 — Template pack builder hardening (md → json).
+- R02 — Documentation clarity: integrity gate vs SDT gate separation.
+- R03 — Windows env-var parity command block standardization.
+- R04 — Test runner parity: explicit unittest list vs discovery.
+- R05 — CI hygiene tightening.
+
+No behavior change; golden outputs unchanged.
