@@ -47,7 +47,7 @@ def parse_template_library_markdown(md_text: str) -> Dict[str, str]:
     return out
 
 
-def build_templates_json_bytes(mapping: Dict[str, str], newline: str = "\r\n") -> bytes:
+def build_templates_json_bytes(mapping: Dict[str, str], newline: str = "\n") -> bytes:
     """Deterministically serialize {template_id: text} as JSON bytes.
 
     Notes:
@@ -59,7 +59,7 @@ def build_templates_json_bytes(mapping: Dict[str, str], newline: str = "\r\n") -
     return s.encode("utf-8")
 
 
-def build_templates_v0_3_json_bytes_from_markdown(md_text: str, newline: str = "\r\n") -> bytes:
+def build_templates_v0_3_json_bytes_from_markdown(md_text: str, newline: str = "\n") -> bytes:
     """Convenience: parse markdown and emit templates_v0_3.json bytes."""
     m = parse_template_library_markdown(md_text)
     return build_templates_json_bytes(m, newline=newline)
