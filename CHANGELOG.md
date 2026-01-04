@@ -3,7 +3,9 @@
 ## v1.0.2
 
 - Fix template-pack builder newline default (LF)
-- Version source change
+- Version hygiene
+- Add repo hygiene docs (LICENSE, CONTRIBUTING, SECURITY)
+
 
 ## v1.0.1
 
