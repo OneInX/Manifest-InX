@@ -1,0 +1,16 @@
+# CITATION.cff
+
+cff-version: 1.2.0
+title: MicroInX
+version: "1.0.2"
+message: "If you use this software, please cite it using this metadata."
+authors:
+  - name: "OneInX-Lab"
+repository-code: "https://github.com/OneInX-Lab/MicroInX"
+keywords:
+  - deterministic
+  - micro-insight
+  - BladeInsight
+abstract: >-
+  Deterministic micro-insight engine that maps minimal user text into a single
+  BladeInsight using a frozen template surface and SDT enforcement.
