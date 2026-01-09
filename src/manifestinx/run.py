@@ -46,6 +46,18 @@ def _read_json_cwd_or_pkg(filename: str):
 #     manifest = _read_json_cwd_or_pkg("manifestinx_manifest_v1.json")
 # - Wherever hashes are computed over the manifest/template bytes, use _read_bytes_cwd_or_pkg(...)
 
+_TEXT_SUFFIXES = {
+    ".py", ".md", ".txt", ".yml", ".yaml", ".toml", ".json", ".ini", ".cfg",
+    ".sh", ".cff"
+}
+
+def _canonical_bytes_for_hash(key: str, data: bytes) -> bytes:
+    # Canonicalize text newlines to LF so hashes are OS-independent.
+    suffix = Path(key).suffix.lower()
+    if suffix in _TEXT_SUFFIXES:
+        data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return data
+
 
 def _sha256_hex(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -137,7 +149,8 @@ def verify_release(manifest_path: Optional[str] = None, base_dir: Optional[Path]
     for key, expected in files.items():
         if not isinstance(expected, str) or len(expected) != 64:
             raise RuntimeError(f"release manifest invalid hash for: {key}")
-        got = _sha256_hex(_read_bytes_for_manifest_key(base_dir, key))
+        raw = _read_bytes_for_manifest_key(base_dir, key)
+        got = _sha256_hex(_canonical_bytes_for_hash(key, raw))
         if got != expected:
             raise RuntimeError(f"release hash mismatch: {Path(key).name}")
 
@@ -150,7 +163,9 @@ def compute_release_hashes(base_dir: Optional[Path] = None) -> Dict[str, str]:
     keys = ["run.py", "engine.py", "data/templates_v0_3.json"]
     out: Dict[str, str] = {}
     for k in keys:
-        out[k] = _sha256_hex(_read_bytes_for_manifest_key(base_dir, k))
+        raw = _read_bytes_for_manifest_key(base_dir, k)
+        out[k] = _sha256_hex(_canonical_bytes_for_hash(k, raw))
+
     return out
 
 
