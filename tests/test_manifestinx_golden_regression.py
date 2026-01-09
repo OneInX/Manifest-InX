@@ -1,4 +1,4 @@
-# MicroInX — Golden Regression Pack (v1.0) — Sprint 9
+# ManifestInX — Golden Regression Pack (v1.0) — Sprint 9
 # Golden regression lock: exact-match on template_id + output_text + SDT envelope.
 # No engine/SDT/template edits; this test is the lock.
 
@@ -7,14 +7,14 @@ import os
 import unittest
 from pathlib import Path
 
-import microinx
-from microinx.run import microinx_run
+import manifestinx
+from manifestinx.run import manifestinx_run
 
 
-GOLDEN_PATH = Path(microinx.__file__).resolve().parent / "data" / "golden_cases_v1.json"
+GOLDEN_PATH = Path(manifestinx.__file__).resolve().parent / "data" / "golden_cases_v1.json"
 
 
-class TestMicroInXGoldenRegressionV1(unittest.TestCase):
+class TestManifestInXGoldenRegressionV1(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with open(GOLDEN_PATH, "r", encoding="utf-8") as f:
@@ -30,13 +30,13 @@ class TestMicroInXGoldenRegressionV1(unittest.TestCase):
     def test_golden_cases_v1(self):
         """Golden regression lock (always runs): exact-match via the stable public entrypoint."""
         for c in self.cases:
-            # Only cases that are expected to pass SDT can be validated end-to-end via microinx_run.
+            # Only cases that are expected to pass SDT can be validated end-to-end via manifestinx_run.
             # Rejection/injection cases are validated separately via a dev-only internal hook.
             if not c.get("expected_sdt_pass", False):
                 continue
 
             with self.subTest(case_id=c.get("case_id")):
-                r = microinx_run(c["input_text"], lang="auto", source="chat")
+                r = manifestinx_run(c["input_text"], lang="auto", source="chat")
                 self.assertEqual(r["template_id"], c["expected_template_id"])
                 self.assertEqual(r["output_text"], c["expected_output_text"])
                 self.assertEqual(r["sdt"]["pass"], c["expected_sdt_pass"])
@@ -46,22 +46,22 @@ class TestMicroInXGoldenRegressionV1(unittest.TestCase):
         """Dev-only integrity hook: validates SDT rejection behavior without changing public surface."""
         # Enable this check only when explicitly requested:
         # PowerShell:
-        #   $env:MICROINX_DEV_INTEGRITY="1"; python -m unittest -q tests/test_microinx_golden_regression.py
+        #   $env:MANIFESTINX_DEV_INTEGRITY="1"; python -m unittest -q tests/test_manifestinx_golden_regression.py
         # CMD:
-        #   set MICROINX_DEV_INTEGRITY=1&& python -m unittest -q tests/test_microinx_golden_regression.py
+        #   set MANIFESTINX_DEV_INTEGRITY=1&& python -m unittest -q tests/test_manifestinx_golden_regression.py
         # Bash:
-        #   MICROINX_DEV_INTEGRITY=1 python -m unittest -q tests/test_microinx_golden_regression.py
-        if os.getenv("MICROINX_DEV_INTEGRITY", "") != "1":
-            self.skipTest("dev-only integrity hook disabled (set MICROINX_DEV_INTEGRITY=1 to run)")
+        #   MANIFESTINX_DEV_INTEGRITY=1 python -m unittest -q tests/test_manifestinx_golden_regression.py
+        if os.getenv("MANIFESTINX_DEV_INTEGRITY", "") != "1":
+            self.skipTest("dev-only integrity hook disabled (set MANIFESTINX_DEV_INTEGRITY=1 to run)")
 
         import importlib
 
         try:
-            microinx_engine = importlib.import_module(
-                "microinx.engine"
+            manifestinx_engine = importlib.import_module(
+                "manifestinx.engine"
             )  # dev-only hook; not part of the stable public surface
         except Exception as e:
-            raise RuntimeError("dev-only integrity hook unavailable: cannot import microinx.engine") from e
+            raise RuntimeError("dev-only integrity hook unavailable: cannot import manifestinx.engine") from e
 
         for c in self.cases:
             if c.get("expected_sdt_pass", False):
@@ -72,7 +72,7 @@ class TestMicroInXGoldenRegressionV1(unittest.TestCase):
                 exp_pass = c["expected_sdt_pass"]
                 exp_v = c["expected_sdt_violations"]
 
-                s = microinx_engine.sdt_gate(exp_out, exp_tid)
+                s = manifestinx_engine.sdt_gate(exp_out, exp_tid)
                 self.assertEqual(s["pass"], exp_pass)
                 self.assertEqual(s["violations"], exp_v)
 

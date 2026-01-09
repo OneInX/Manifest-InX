@@ -17,7 +17,7 @@ B03 — Deterministic variant selection clarity (when variant triggers apply)
 - Scope: S
 - Dependency: R07
 
-B04 — Windows PowerShell env-var parity commands (MICROINX_DEV_INTEGRITY, demo port, etc.)
+B04 — Windows PowerShell env-var parity commands (MANIFESTINX_DEV_INTEGRITY, demo port, etc.)
 - Owner: QA
 - Scope: S
 - Dependency: R03

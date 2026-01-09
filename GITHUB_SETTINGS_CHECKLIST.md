@@ -1,6 +1,6 @@
 # GITHUB_SETTINGS_CHECKLIST.md
 
-Single-page, UI-executable checklist to protect the frozen MicroInX v1.0.2 surface.
+Single-page, UI-executable checklist to protect the frozen Manifest-InX v1.0.x surface.
 
 ---
 
@@ -28,11 +28,13 @@ Path: **Settings → Branches → Branch protection rules → Add rule**
 
 - Enable **Require status checks to pass before merging**
   - Enable **Require branches to be up to date before merging** *(optional; higher friction)*
-  - Select the exact checks produced by `.github/workflows/microinx_ci.yml`:
-    - Workflow: `microinx-ci`
+  - Select the exact checks produced by `.github/workflows/manifestinx_ci.yml`:
+    - Workflow: `manifestinx-ci`
     - Required check runs (matrix):
-      - `smoke (3.10)`
-      - `smoke (3.12)`
+      - After the first successful CI run on `main`, copy the exact check names shown by GitHub.
+      - For example, with a matrix job you will typically see:
+        - `manifestinx-ci / smoke (3.10)`
+        - `manifestinx-ci / smoke (3.12)`
 
 ### Protections against history rewrite
 

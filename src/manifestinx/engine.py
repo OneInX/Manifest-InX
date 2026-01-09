@@ -1,5 +1,5 @@
-# src/microinx/engine.py
-# MicroInX Engine v1.0 — minimal deterministic skeleton (Sprint 1, low-compute)
+# src/manifestinx/engine.py
+# ManifestInX Engine v1.0 — minimal deterministic skeleton (Sprint 1, low-compute)
 
 from __future__ import annotations
 
@@ -13,11 +13,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-# --- Canonical templates (v0.3) loaded from package data (src/microinx/data/templates_v0_3.json) ---
+# --- Canonical templates (v0.3) loaded from package data (src/manifestinx/data/templates_v0_3.json) ---
 # Continuity rule: engine derives template_id → text from the packaged canonical file.
-# Optional integrity: if MICROINX_TEMPLATES_SHA256 is set, engine refuses to run on mismatch.
+# Optional integrity: if MANIFESTINX_TEMPLATES_SHA256 is set, engine refuses to run on mismatch.
 
-TEMPLATE_DATA_PKG = "microinx.data"
+TEMPLATE_DATA_PKG = "manifestinx.data"
 TEMPLATE_DATA_FILE = "templates_v0_3.json"
 
 _TEMPLATES_CACHE: Optional[Dict[str, str]] = None
@@ -39,7 +39,7 @@ def _load_templates_bytes() -> bytes:
 def load_templates_v03() -> Dict[str, str]:
     raw = _load_templates_bytes()
 
-    expected = os.environ.get("MICROINX_TEMPLATES_SHA256", "").strip()
+    expected = os.environ.get("MANIFESTINX_TEMPLATES_SHA256", "").strip()
     if expected and _sha256_hex(raw) != expected:
         raise RuntimeError("Canonical templates hash mismatch")
 

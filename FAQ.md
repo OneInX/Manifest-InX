@@ -1,6 +1,6 @@
 # FAQ.md
 
-# MicroInX — FAQ + Troubleshooting
+# Manifest-InX — FAQ + Troubleshooting
 
 ## 1) How do I install from a local clone (editable)?
 
@@ -17,13 +17,13 @@ python -m pip install . --no-deps
 ## 3) How do I run the one-command demo?
 
 ```bash
-microinx-demo
+inxzap-demo
 ```
 
 Module fallback:
 
 ```bash
-python -m microinx.demo
+python -m inxzap.demo
 ```
 
 ## 4) The demo says the port is already in use. What do I do?
@@ -33,13 +33,13 @@ Use an ephemeral port (recommended):
 Bash:
 
 ```bash
-MICROINX_DEMO_PORT=0 microinx-demo
+MANIFESTINX_DEMO_PORT=0 inxzap-demo
 ```
 
 PowerShell:
 
 ```powershell
-$env:MICROINX_DEMO_PORT="0"; microinx-demo
+$env:MANIFESTINX_DEMO_PORT=0; inxzap-demo
 ```
 
 Or choose a specific free port:
@@ -47,16 +47,16 @@ Or choose a specific free port:
 Bash:
 
 ```bash
-MICROINX_DEMO_PORT=18080 microinx-demo
+MANIFESTINX_DEMO_PORT=18080 inxzap-demo
 ```
 
 PowerShell:
 
 ```powershell
-$env:MICROINX_DEMO_PORT="18080"; microinx-demo
+$env:MANIFESTINX_DEMO_PORT=18080; inxzap-demo
 ```
 
-## 5) The demo prints “MICROINX_DEMO_PORT must be an int”.
+## 5) The demo prints “MANIFESTINX_DEMO_PORT must be an int”.
 
 Set it to a numeric value (for example `0` or `18080`). If your shell adds quotes automatically, use a plain integer string.
 
@@ -78,7 +78,7 @@ Your runtime files do not match the frozen manifest. Reinstall from a clean tag/
 From repo root:
 
 ```bash
-python -m unittest -q discover -s tests -p "test_*.py"
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
 ## 10) Where do I report security issues?

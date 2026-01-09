@@ -3,22 +3,31 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "microinx"
-version = "1.0.2"
-description = "MicroInX v1.0 (deterministic BladeInsight engine + adapter + demo wrapper)"
-requires-python = ">=3.8"
-readme = "PACKAGING.md"
-license = {text = "Proprietary"}
-authors = [{name = "MicroInX"}]
+name = "manifestinx"
+version = "1.0.0"
+description = "Manifest-InX v1.0 (deterministic engine + adapter + inxzap wrapper)"
+requires-python = ">=3.10"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "OneInX-Lab"}]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+]
+
 dependencies = []
 
+[project.urls]
+# Update after the new repo is created.
+Repository = "https://github.com/OneInX/Manifest-InX"
+
 [project.scripts]
-# Stable console surface: runs the one-command demo.
-microinx-demo = "microinx.demo:main"
+inxzap-demo   = "inxzap.demo:main"
+manifestinx-demo = "inxzap.compat:manifestinx_demo_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 # Wheel-safe: ship manifest + templates inside the installed package.
-"microinx" = ["data/*.json", "py.typed"]
+"manifestinx" = ["data/*.json", "py.typed"]

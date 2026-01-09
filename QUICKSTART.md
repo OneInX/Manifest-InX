@@ -1,24 +1,28 @@
-# MicroInX v1.0.x — Quickstart
+# QUICKSTART
 
-Minimal, deterministic Blade Insight generator (non-generative).
+## Demo (one command)
+
+```powershell
+$env:MANIFESTINX_DEMO_PORT=0; inxzap-demo
+```
 
 ## Where files live (current repo layout)
 
 Package code:
-- `src/microinx/engine.py`
-- `src/microinx/run.py`
+- `src/manifestinx/engine.py`
+- `src/manifestinx/run.py`
 
 Package data (manifest-locked):
-- `src/microinx/data/templates_v0_3.json`
-- `src/microinx/data/microinx_manifest_v1.json`
+- `src/manifestinx/data/templates_v0_3.json`
+- `src/manifestinx/data/manifestinx_manifest_v1.json`
 
 ## Run (repo)
 
 ### Callable
 
 ```python
-from microinx.run import microinx_run
+from manifestinx.run import manifestinx_run
 
-out = microinx_run("later.")
+out = manifestinx_run("later.")
 # -> {"template_id": "...", "output_text": "...", "sdt": {"pass": True, "violations": [...]}}
 print(out)

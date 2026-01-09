@@ -2,14 +2,15 @@
 
 ---
 
-## name: Bug report about: Report a reproducible bug in MicroInX. title: "bug: " labels: [bug]
+## name: Bug report about: Report a reproducible bug in Manifest-InX. title: "bug: " labels: [bug]
 
 ## Version (required)
 
 Provide one:
 
-- `microinx --version` (if available)
-- Manifest version: `src/microinx/data/microinx_manifest_v1.json` → `version`
+- `manifestinx --version` (if available)
+- `pip show manifestinx` → `Version`
+- Manifest version: `src/manifestinx/data/manifestinx_manifest_v1.json` → `version`
 - API health: `GET /health` → `version`
 
 Version:

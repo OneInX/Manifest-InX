@@ -1,4 +1,4 @@
-# tests/test_microinx_api_smoke.py
+# tests/test_manifestinx_api_smoke.py
 # Smoke slice: API wrapper + determinism + SDT reject + manifest tamper refusal
 
 import json
@@ -15,17 +15,17 @@ try:
 except Exception:  # pragma: no cover
     _dist_version = None
 
-from microinx import api as microinx_api
-from microinx import engine as microinx_engine
+from manifestinx import api as manifestinx_api
+from manifestinx import engine as manifestinx_engine
 
 
 def _expected_version() -> str:
     # Prefer installed distribution version (works in CI / editable installs)
     if _dist_version is not None:
-        return _dist_version("microinx")
-    # Fallback: if you expose microinx.__version__
-    import microinx
-    return getattr(microinx, "__version__", "0.0.0")
+        return _dist_version("manifestinx")
+    # Fallback: if you expose manifestinx.__version__
+    import manifestinx
+    return getattr(manifestinx, "__version__", "0.0.0")
 
 
 def _get(url: str) -> dict:
@@ -40,10 +40,10 @@ def _post_json(url: str, payload: dict) -> dict:
         return json.loads(r.read().decode("utf-8"))
 
 
-class TestMicroInXAdapterSmoke(unittest.TestCase):
+class TestManifestInXAdapterSmoke(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.httpd = microinx_api.make_server("127.0.0.1", 0)
+        cls.httpd = manifestinx_api.make_server("127.0.0.1", 0)
         host, port = cls.httpd.server_address
         cls.base = f"http://{host}:{port}"
 
@@ -75,7 +75,7 @@ class TestMicroInXAdapterSmoke(unittest.TestCase):
     def test_S3_sdt_reject(self):
         # Endpoint-level SDT FAIL is not expected under canonical templates (dev integrity signal).
         # We validate SDT gating directly; /insight always returns the SDT envelope.
-        s = microinx_engine.sdt_gate("Maybe you defer by widening input until signal collapses.", "T01")
+        s = manifestinx_engine.sdt_gate("Maybe you defer by widening input until signal collapses.", "T01")
         self.assertFalse(s["pass"])
         self.assertTrue(any(v.startswith("FORBIDDEN:") for v in s["violations"]))
 
@@ -84,14 +84,14 @@ class TestMicroInXAdapterSmoke(unittest.TestCase):
         # Tamper the packaged template resource that verify_release checks.
         from importlib.resources import as_file
 
-        tpl = _ir.files("microinx") / "data" / "templates_v0_3.json"
+        tpl = _ir.files("manifestinx") / "data" / "templates_v0_3.json"
 
         with as_file(tpl) as tpl_path:
             orig = tpl_path.read_bytes()
             try:
                 tpl_path.write_bytes(orig + b" ")
                 with self.assertRaises(Exception):
-                    microinx_api.make_server("127.0.0.1", 0)
+                    manifestinx_api.make_server("127.0.0.1", 0)
             finally:
                 tpl_path.write_bytes(orig)
 

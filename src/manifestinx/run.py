@@ -1,11 +1,11 @@
-# src/microinx/run.py
-# MicroInX Release Candidate Entrypoint v1.0.x.
+# src/manifestinx/run.py
+# ManifestInX Release Candidate Entrypoint v1.0.x.
 #
 # Deterministic callable + minimal CLI wrapper.
 # Refuses to run if release hash manifest verification fails.
 #
 # Supports BOTH:
-# - repo layout (files on disk under src/microinx/...)
+# - repo layout (files on disk under src/manifestinx/...)
 # - installed package layout (data loaded via importlib.resources)
 
 from __future__ import annotations
@@ -20,18 +20,18 @@ from typing import Any, Dict, Optional, Tuple
 
 from importlib import resources as ir
 
-DEFAULT_MANIFEST_BASENAME = "microinx_manifest_v1.json"
+DEFAULT_MANIFEST_BASENAME = "manifestinx_manifest_v1.json"
 
 def _read_bytes_cwd_or_pkg(filename: str) -> bytes:
     p = Path(filename)
     if p.is_file():
         return p.read_bytes()
-    # packaged fallback: microinx/data/<filename>
+    # packaged fallback: manifestinx/data/<filename>
     try:
-        return (ir.files("microinx") / "data" / filename).read_bytes()
+        return (ir.files("manifestinx") / "data" / filename).read_bytes()
     except Exception as e:
         raise FileNotFoundError(
-            f"Missing {filename}: not found in CWD and not found in package data microinx/data/"
+            f"Missing {filename}: not found in CWD and not found in package data manifestinx/data/"
         ) from e
 
 
@@ -42,8 +42,8 @@ def _read_json_cwd_or_pkg(filename: str):
 # Then, in the existing loaders (examples; keep existing variable names / logic):
 # - Wherever templates_v0_3.json is loaded:
 #     templates = _read_json_cwd_or_pkg("templates_v0_3.json")
-# - Wherever microinx_manifest_v1.json is loaded:
-#     manifest = _read_json_cwd_or_pkg("microinx_manifest_v1.json")
+# - Wherever manifestinx_manifest_v1.json is loaded:
+#     manifest = _read_json_cwd_or_pkg("manifestinx_manifest_v1.json")
 # - Wherever hashes are computed over the manifest/template bytes, use _read_bytes_cwd_or_pkg(...)
 
 
@@ -56,11 +56,11 @@ def _load_manifest_bytes(base_dir: Path, manifest_path: Optional[str]) -> Tuple[
     Returns: (bytes, origin_label)
     Search order:
       1) explicit manifest_path (file system)
-      2) env MICROINX_MANIFEST_PATH (file system)
-      3) repo-style: <base_dir>/microinx_manifest_v1.json
-      4) package data: microinx.data/microinx_manifest_v1.json
+      2) env MANIFESTINX_MANIFEST_PATH (file system)
+      3) repo-style: <base_dir>/manifestinx_manifest_v1.json
+      4) package data: manifestinx.data/manifestinx_manifest_v1.json
     """
-    candidate = manifest_path or os.environ.get("MICROINX_MANIFEST_PATH")
+    candidate = manifest_path or os.environ.get("MANIFESTINX_MANIFEST_PATH")
 
     if candidate:
         p = Path(candidate)
@@ -77,10 +77,10 @@ def _load_manifest_bytes(base_dir: Path, manifest_path: Optional[str]) -> Tuple[
 
     # installed package data
     try:
-        b = ir.files("microinx.data").joinpath(DEFAULT_MANIFEST_BASENAME).read_bytes()
-        return (b, "pkg:microinx.data/" + DEFAULT_MANIFEST_BASENAME)
+        b = ir.files("manifestinx.data").joinpath(DEFAULT_MANIFEST_BASENAME).read_bytes()
+        return (b, "pkg:manifestinx.data/" + DEFAULT_MANIFEST_BASENAME)
     except Exception as e:
-        raise RuntimeError("release manifest missing: microinx.data/microinx_manifest_v1.json") from e
+        raise RuntimeError("release manifest missing: manifestinx.data/manifestinx_manifest_v1.json") from e
 
 
 def _read_bytes_for_manifest_key(base_dir: Path, key: str) -> bytes:
@@ -90,14 +90,14 @@ def _read_bytes_for_manifest_key(base_dir: Path, key: str) -> bytes:
       - 'engine.py'
       - 'data/templates_v0_3.json'
     Resolution order per key:
-      1) file system (repo-style): <base_dir>/src/microinx/<key>
+      1) file system (repo-style): <base_dir>/src/manifestinx/<key>
       2) file system (flat): <base_dir>/<key>
       3) package resources:
-         - if key starts with 'data/': microinx.data/<basename>
-         - else: microinx/<key>
+         - if key starts with 'data/': manifestinx.data/<basename>
+         - else: manifestinx/<key>
     """
     # repo-style under src/
-    repo_style = base_dir / "src" / "microinx" / key
+    repo_style = base_dir / "src" / "manifestinx" / key
     if repo_style.exists():
         return repo_style.read_bytes()
 
@@ -110,8 +110,8 @@ def _read_bytes_for_manifest_key(base_dir: Path, key: str) -> bytes:
     try:
         if key.startswith("data/"):
             name = key[len("data/") :]
-            return ir.files("microinx.data").joinpath(name).read_bytes()
-        return ir.files("microinx").joinpath(key).read_bytes()
+            return ir.files("manifestinx.data").joinpath(name).read_bytes()
+        return ir.files("manifestinx").joinpath(key).read_bytes()
     except Exception as e:
         raise RuntimeError(f"release file missing: {Path(key).name}") from e
 
@@ -154,7 +154,7 @@ def compute_release_hashes(base_dir: Optional[Path] = None) -> Dict[str, str]:
     return out
 
 
-def microinx_run(text: str, lang: str = "auto", source: str = "chat") -> Dict[str, Any]:
+def manifestinx_run(text: str, lang: str = "auto", source: str = "chat") -> Dict[str, Any]:
     """Stable deterministic entrypoint.
 
     Public API intentionally excludes any time parameter to reduce surface area; scoring is input-only.
@@ -178,7 +178,7 @@ def microinx_run(text: str, lang: str = "auto", source: str = "chat") -> Dict[st
 
 
 def _main(argv: Optional[list[str]] = None) -> int:
-    p = argparse.ArgumentParser(prog="microinx", add_help=True)
+    p = argparse.ArgumentParser(prog="manifestinx", add_help=True)
     p.add_argument("text", nargs="?", help="Input text (1–2000 chars)")
     p.add_argument("--json", action="store_true", help="Emit JSON {template_id, output_text, sdt}")
     p.add_argument("--lang", default="auto", help="en|ko|auto (default: auto)")
@@ -200,7 +200,7 @@ def _main(argv: Optional[list[str]] = None) -> int:
         if not args.text:
             p.error("text is required unless --verify-only or --print-hashes is used")
 
-        out = microinx_run(args.text, lang=args.lang, source=args.source)
+        out = manifestinx_run(args.text, lang=args.lang, source=args.source)
 
     except RuntimeError as e:
         print(str(e), file=sys.stderr)

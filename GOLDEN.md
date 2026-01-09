@@ -1,8 +1,8 @@
-# MicroInX Golden Regression (v1)
+# Manifest-InX Golden Regression (v1)
 
 ## What “golden” means
 
-A golden case is an exact-match contract over the stable MicroInX v1.0 surface:
+A golden case is an exact-match contract over the stable Manifest-InX v1.0 surface:
 
 - `template_id` is deterministic for a given `input_text`.
 - `output_text` is the exact canonical template text for `template_id`.
@@ -20,9 +20,14 @@ Any intentional behavior change requires:
 2) Update the test to point to the new file and enforce the new `golden_version`.
 3) Record a one-line rationale in this file under “Change Log”.
 
-## How to run locally
+## Canonical golden file
 
-From repo root:
+- `src/manifestinx/data/golden_cases_v1.json`
+
+## Enforcement test
+
+Run:
 
 ```bash
-python -m unittest -q tests/test_microinx_golden_regression.py
+python -m unittest -q tests.test_manifestinx_golden_regression
+```

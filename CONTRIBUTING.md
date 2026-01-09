@@ -1,8 +1,8 @@
 # CONTRIBUTING.md
 
-MicroInX accepts issues and pull requests, but all contributions are reviewed at the sole discretion of the maintainers and may be rejected for any reason.
+Manifest-InX accepts issues and pull requests, but all contributions are reviewed at the sole discretion of the maintainers and may be rejected for any reason.
 
-## Frozen behavior boundaries (v1.0 / v1.0.2)
+## Frozen behavior boundaries (v1.0 / v1.0.x)
 
 The following are treated as frozen in v1.0.x and will not be accepted via issues or PRs unless an explicit version bump and written rationale are approved:
 
@@ -25,11 +25,13 @@ The following are treated as frozen in v1.0.x and will not be accepted via issue
 3. Run the test suite:
 
 ```bash
-python -m unittest -q discover -s tests -p "test_*.py"
-MICROINX_DEMO_PORT=0 microinx-demo
+python -m unittest discover -s tests -p "test_*.py" -q
+
+# Demo smoke (Bash):
+MANIFESTINX_DEMO_PORT=0 inxzap-demo
 
 # PowerShell equivalent:
-# $env:MICROINX_DEMO_PORT=0; microinx-demo
+$env:MANIFESTINX_DEMO_PORT=0; inxzap-demo
 ```
 
 4. Open a pull request with:
@@ -40,4 +42,4 @@ MICROINX_DEMO_PORT=0 microinx-demo
 
 ## Licensing of contributions
 
-By submitting a pull request or patch, you grant OneInX LLC a perpetual, worldwide, royalty-free, irrevocable license to use, modify, and relicense your contribution as part of MicroInX.
+By contributing, you agree your contributions are licensed under the project’s Apache-2.0 license.

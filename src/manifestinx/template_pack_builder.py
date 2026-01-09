@@ -1,12 +1,12 @@
-# src/microinx/template_pack_builder.py
-# MicroInX v1.0.1 patch track (R01)
+# src/manifestinx/template_pack_builder.py
+# Manifest-InX v1.0.0
 #
 # Deterministic template pack builder (v0.3 → templates_v0_3.json).
 #
 # Constraints:
 # - No mapping changes, no template text changes.
 # - Canonical output for the canonical markdown source must be byte-identical to
-#   the committed src/microinx/data/templates_v0_3.json.
+#   the committed src/manifestinx/data/templates_v0_3.json.
 # - Robust to trivial formatting variance in the markdown (e.g., bullet prefix
 #   or extra whitespace), without changing extracted template texts.
 
@@ -51,7 +51,7 @@ def build_templates_json_bytes(mapping: Dict[str, str], newline: str = "\n") -> 
     """Deterministically serialize {template_id: text} as JSON bytes.
 
     Notes:
-    - We force CRLF by default to match the repository's frozen pack bytes.
+    - We force LF by default to match the repository's frozen pack bytes.
     - We always end with exactly one trailing newline.
     """
     s = json.dumps(mapping, ensure_ascii=False, sort_keys=True, indent=2)

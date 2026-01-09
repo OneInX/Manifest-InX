@@ -1,5 +1,5 @@
-# src/microinx/api.py
-# MicroInX — Integration Adapter v1.0 (Sprint 4)
+# src/manifestinx/api.py
+# ManifestInX — Integration Adapter v1.0 (Sprint 4)
 # Minimal local JSON API wrapper. No engine logic changes.
 
 from __future__ import annotations
@@ -19,11 +19,11 @@ except Exception:  # pragma: no cover
 from importlib import resources as _ir
 
 # Existing deterministic entrypoint (Release Candidate Pack)
-from microinx import run as microinx_run
+from manifestinx import run as manifestinx_run
 
 
-_MANIFEST_ENV = "MICROINX_MANIFEST_PATH"
-_DEFAULT_MANIFEST_NAME = "microinx_manifest_v1.json"
+_MANIFEST_ENV = "MANIFESTINX_MANIFEST_PATH"
+_DEFAULT_MANIFEST_NAME = "manifestinx_manifest_v1.json"
 
 
 def _load_manifest_json() -> dict:
@@ -38,13 +38,13 @@ def _load_manifest_json() -> dict:
         with open(_DEFAULT_MANIFEST_NAME, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    # Finally, packaged resource under microinx/data/.
+    # Finally, packaged resource under manifest/data/.
     try:
-        with (_ir.files("microinx") / "data" / _DEFAULT_MANIFEST_NAME).open("r", encoding="utf-8") as f:
+        with (_ir.files("manifestinx") / "data" / _DEFAULT_MANIFEST_NAME).open("r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         # Compatibility fallback
-        with _ir.open_text("microinx", os.path.join("data", _DEFAULT_MANIFEST_NAME), encoding="utf-8") as f:
+        with _ir.open_text("manifestinx", os.path.join("data", _DEFAULT_MANIFEST_NAME), encoding="utf-8") as f:
             return json.load(f)
 
 
@@ -65,12 +65,12 @@ def verify_release_or_raise() -> str:
     Raises:
       RuntimeError if any manifest hash mismatch occurs.
     """
-    microinx_run.verify_release()
+    manifestinx_run.verify_release()
     return _read_manifest_version()
 
 
-class MicroInXAPIHandler(BaseHTTPRequestHandler):
-    server_version = "MicroInXAPI/1.0"
+class ManifestInXAPIHandler(BaseHTTPRequestHandler):
+    server_version = "ManifestInXAPI/1.0"
     protocol_version = "HTTP/1.1"
 
     # injected at server construction
@@ -119,7 +119,7 @@ class MicroInXAPIHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            r = microinx_run.microinx_run(text)
+            r = manifestinx_run.manifestinx_run(text)
         except Exception as e:
             # minimal error surface; do not add new semantics
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "engine_error", "detail": str(e)})
@@ -137,14 +137,14 @@ class MicroInXAPIHandler(BaseHTTPRequestHandler):
 def make_server(host: str = "127.0.0.1", port: int = 8080) -> _HTTPServer:
     version = verify_release_or_raise()
 
-    class _H(MicroInXAPIHandler):
+    class _H(ManifestInXAPIHandler):
         _release_version = version
 
     return _HTTPServer((host, port), _H)
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="microinx-api")
+    ap = argparse.ArgumentParser(prog="manifestinx-api")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8080)
     args = ap.parse_args(argv)

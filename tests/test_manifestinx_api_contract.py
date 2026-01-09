@@ -1,4 +1,4 @@
-# MicroInX — API Contract Pack v1.0 (Sprint 5)
+# manifestinx — API Contract Pack v1.0 (Sprint 5)
 # Contract slice: shape + required keys/types + determinism.
 
 import json
@@ -7,7 +7,7 @@ import time
 import unittest
 import urllib.request
 
-from microinx import api as microinx_api
+from manifestinx import api as manifestinx_api
 
 
 def _get(url: str) -> dict:
@@ -32,10 +32,10 @@ def _assert_is_str(tc: unittest.TestCase, v, k: str) -> None:
     tc.assertTrue(len(v) > 0, f"{k} must be non-empty")
 
 
-class TestMicroInXAPIContractV1(unittest.TestCase):
+class TestmanifestinxAPIContractV1(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.httpd = microinx_api.make_server("127.0.0.1", 0)
+        cls.httpd = manifestinx_api.make_server("127.0.0.1", 0)
         host, port = cls.httpd.server_address
         cls.base = f"http://{host}:{port}"
 

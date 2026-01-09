@@ -1,15 +1,15 @@
-# tests/test_microinx_demo_smoke.py
-# MicroInX — One-Command Demo Pack v1.0 (Sprint 6)
+# tests/test_manifestinx_demo_smoke.py
+# ManifestInX — One-Command Demo Pack v1.0 (Sprint 6)
 # Smoke slice: demo runner envelope + determinism.
 
 import unittest
 
-from microinx import demo as microinx_demo
+from manifestinx import demo as manifestinx_demo
 
 
-class TestMicroInXDemoSmoke(unittest.TestCase):
+class TestmanifestinxDemoSmoke(unittest.TestCase):
     def test_demo_returns_valid_envelope(self):
-        r = microinx_demo.run_demo(port=0)  # ephemeral port for tests
+        r = manifestinx_demo.run_demo(port=0)  # ephemeral port for tests
 
         self.assertEqual(set(r.keys()), {"template_id", "output_text", "sdt", "manifest"})
         self.assertIsInstance(r["template_id"], str)
@@ -31,8 +31,8 @@ class TestMicroInXDemoSmoke(unittest.TestCase):
         self.assertIsInstance(r["manifest"]["hash_ok"], bool)
 
     def test_demo_is_deterministic_on_required_tuple(self):
-        r1 = microinx_demo.run_demo(port=0)
-        r2 = microinx_demo.run_demo(port=0)
+        r1 = manifestinx_demo.run_demo(port=0)
+        r2 = manifestinx_demo.run_demo(port=0)
 
         self.assertEqual(r1["template_id"], r2["template_id"])
         self.assertEqual(r1["output_text"], r2["output_text"])

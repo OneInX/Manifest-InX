@@ -14,20 +14,21 @@
 -
 
 ```bash
-python -m unittest -q discover -s tests -p "test_*.py"
+python -m unittest -q tests.test_manifestinx_engine
+python -m unittest -q tests.test_manifestinx_api_smoke
+python -m unittest -q tests.test_manifestinx_api_contract
+python -m unittest -q tests.test_manifestinx_demo_smoke
+python -m unittest -q tests.test_manifestinx_golden_regression
 ```
-
--
 
 ```bash
-python -m unittest -q tests/test_microinx_golden_regression.py
+MANIFESTINX_DEMO_PORT=0 inxzap-demo
 ```
 
--
-
-```bash
-MICROINX_DEMO_PORT=0 microinx-demo
+```PowerShell
+$env:MANIFESTINX_DEMO_PORT=0; inxzap-demo
 ```
+
 
 ## Risk surface (1–2 bullets)
 

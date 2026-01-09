@@ -1,11 +1,11 @@
-# tests/test_microinx_engine.py
+# tests/test_manifestinx_engine.py
 # Minimal unit slice: 6 PASS + 4 FAIL (Sprint 1)
 
 import unittest
 from pathlib import Path
 
-from microinx.engine import generate_blade_insight, get_templates, sdt_gate
-from microinx.template_pack_builder import (
+from manifestinx.engine import generate_blade_insight, get_templates, sdt_gate
+from manifestinx.template_pack_builder import (
     build_templates_v0_3_json_bytes_from_markdown,
     parse_template_library_markdown,
 )
@@ -15,7 +15,7 @@ def msignal(raw_text: str):
     return {"raw_text": raw_text, "lang": "auto", "source": "chat", "ts": "2025-01-01T00:00:00Z"}
 
 
-class TestMicroInXEngineSprint1(unittest.TestCase):
+class TestmanifestinxEngineSprint1(unittest.TestCase):
     # ---- PASS (engine path) ----
     def test_P01_drift_T01(self):
         templates = get_templates()
@@ -85,8 +85,8 @@ class TestMicroInXEngineSprint1(unittest.TestCase):
 class TestTemplatePackBuilderRobustness(unittest.TestCase):
     def test_R01_builder_canonical_md_matches_frozen_pack_bytes(self):
         repo_root = Path(__file__).resolve().parents[1]
-        md_path = repo_root / "src" / "microinx" / "data" / "template_pack_source_v0_3.md"
-        pack_path = repo_root / "src" / "microinx" / "data" / "templates_v0_3.json"
+        md_path = repo_root / "src" / "manifestinx" / "data" / "template_pack_source_v0_3.md"
+        pack_path = repo_root / "src" / "manifestinx" / "data" / "templates_v0_3.json"
 
         md = md_path.read_text(encoding="utf-8")
         built = build_templates_v0_3_json_bytes_from_markdown(md)
@@ -95,8 +95,8 @@ class TestTemplatePackBuilderRobustness(unittest.TestCase):
 
     def test_R01_builder_tolerates_trivial_format_variance(self):
         repo_root = Path(__file__).resolve().parents[1]
-        md_path = repo_root / "src" / "microinx" / "data" / "template_pack_source_v0_3.md"
-        pack_path = repo_root / "src" / "microinx" / "data" / "templates_v0_3.json"
+        md_path = repo_root / "src" / "manifestinx" / "data" / "template_pack_source_v0_3.md"
+        pack_path = repo_root / "src" / "manifestinx" / "data" / "templates_v0_3.json"
 
         canonical_md = md_path.read_text(encoding="utf-8")
         lines = []

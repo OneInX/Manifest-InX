@@ -1,7 +1,7 @@
-recursive-include src/microinx/data *.json
+recursive-include src/manifestinx/data *.json
 
 # Optional: ship contract/demo docs alongside source dist.
-include openapi_microinx_v1.yaml
+include openapi_manifestinx_v1.yaml
 include API_CONTRACT.md
 include DEMO.md
 include ADAPTER_QUICKSTART.md

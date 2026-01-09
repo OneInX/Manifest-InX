@@ -1,5 +1,5 @@
-# src/microinx/demo.py
-# MicroInX — One-Command Demo Pack v1.0 (Sprint 6)
+# src/manifestinx/demo.py
+# ManifestInX — One-Command Demo Pack v1.0 (Sprint 6)
 # Wrapper only: verifies release, starts local API server, sends one demo request, prints response, exits.
 # No engine/mapping/SDT/template/manifest/contract changes.
 
@@ -13,16 +13,16 @@ import time
 import urllib.request
 from typing import Any, Dict
 
-from . import api as microinx_api
-from . import run as microinx_run
+from . import api as manifestinx_api
+from . import run as manifestinx_run
 
 
 HOST_DEFAULT = "127.0.0.1"
 PORT_DEFAULT = 8080  # fixed default demo port (matches the v1.0 OpenAPI server URL)
 
 # Optional overrides (do not change defaults):
-# - MICROINX_DEMO_HOST
-# - MICROINX_DEMO_PORT
+# - MANIFESTINX_DEMO_HOST
+# - MANIFESTINX_DEMO_PORT
 
 DEMO_INPUT_TEXT = "Need more context and more research; later it depends. I revisit again and still."
 
@@ -48,9 +48,9 @@ def _post_json(url: str, payload: dict) -> dict:
 def verify_release() -> str:
     """Verify release integrity (manifest hashes) and return release version."""
     # Strong gate (refuses on any hash mismatch).
-    microinx_run.verify_release()
+    manifestinx_run.verify_release()
     # Stable version string from manifest.
-    return microinx_api.verify_release_or_raise()
+    return manifestinx_api.verify_release_or_raise()
 
 
 def run_demo(host: str = HOST_DEFAULT, port: int = PORT_DEFAULT) -> Dict[str, Any]:
@@ -61,7 +61,7 @@ def run_demo(host: str = HOST_DEFAULT, port: int = PORT_DEFAULT) -> Dict[str, An
     # Explicit preflight: verify manifest before starting server.
     _ = verify_release()
 
-    httpd = microinx_api.make_server(host, port)
+    httpd = manifestinx_api.make_server(host, port)
     srv_host, srv_port = httpd.server_address
     base = f"http://{srv_host}:{srv_port}"
 
@@ -78,18 +78,18 @@ def run_demo(host: str = HOST_DEFAULT, port: int = PORT_DEFAULT) -> Dict[str, An
 
 
 def _env_port(default: int) -> int:
-    s = os.getenv("MICROINX_DEMO_PORT")
+    s = os.getenv("MANIFESTINX_DEMO_PORT")
     if not s:
         return default
     try:
         p = int(s)
     except ValueError as e:
-        raise ValueError(f"MICROINX_DEMO_PORT must be an int, got: {s!r}") from e
+        raise ValueError(f"MANIFESTINX_DEMO_PORT must be an int, got: {s!r}") from e
     return p
 
 
 def main() -> int:
-    host = os.getenv("MICROINX_DEMO_HOST", HOST_DEFAULT)
+    host = os.getenv("MANIFESTINX_DEMO_HOST", HOST_DEFAULT)
 
     try:
         port = _env_port(PORT_DEFAULT)
@@ -105,7 +105,7 @@ def main() -> int:
         if getattr(e, "errno", None) in (98, 48, 10048):
             print(
                 f"ERROR: port {port} is already in use. "
-                f"Either free it, or set MICROINX_DEMO_PORT to an available port and rerun.",
+                f"Either free it, or set MANIFESTINX_DEMO_PORT to an available port and rerun.",
                 file=sys.stderr,
             )
             return 2

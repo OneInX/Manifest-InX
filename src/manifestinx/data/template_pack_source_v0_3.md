@@ -1,4 +1,4 @@
-# MicroInX Templates v0.3 — Frozen Pack Source
+# ManifestInX Templates v0.3 — Frozen Pack Source
 
 **T01** — You defer by widening input until signal collapses. Narrow input doesn’t prevent single-channel collapse.
 **T02** — You degrade reference by letting definition expand without constraint. A frozen frame doesn’t stop scope creep.

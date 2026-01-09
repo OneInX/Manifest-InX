@@ -1,14 +1,14 @@
 openapi: 3.0.3
 info:
-  title: MicroInX Integration Adapter API
+  title: Manifest-InX Integration Adapter API
   version: "1.0.0"
   description: |
-    Format-stable OpenAPI contract for the MicroInX Integration Adapter v1.0.
+    Format-stable OpenAPI contract for the Manifest-InX Integration Adapter v1.0.
 
     Determinism: identical request bodies must yield identical 200 responses
     for the tuple {template_id, output_text, sdt}.
 
-    Release integrity: the server verifies the MicroInX release manifest on startup
+    Release integrity: the server verifies the Manifest-InX release manifest on startup
     and refuses to serve if any required file hash mismatches.
 
     Note: manifest-hash mismatch is a server refusal (startup failure), not an HTTP
@@ -45,7 +45,7 @@ paths:
   /insight:
     post:
       operationId: insight
-      summary: Generate a deterministic BladeInsight
+      summary: Generate a deterministic InX-Zap
       requestBody:
         required: true
         content:
@@ -110,7 +110,7 @@ components:
         text:
           type: string
           minLength: 1
-          description: Raw input text for the deterministic MicroInX engine.
+          description: Raw input text for the deterministic Manifest-InX engine.
 
     InsightResponse:
       type: object

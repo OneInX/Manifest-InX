@@ -1,12 +1,11 @@
 # CODEOWNERS
 
-# MicroInX — CODEOWNERS (v1.0.2)
-# Owner handle: @OneInX-Lab
+# Manifest-InX — CODEOWNERS (v1.0.0)
 
-* @OneInX-Lab
+# Owner handle: @OneInX
 
 # Optional tighter scopes (same placeholder owner by default)
-/src/ @OneInX-Lab
-/tests/ @OneInX-Lab
-/.github/ @OneInX-Lab
-/docs/ @OneInX-Lab
+/src/ @OneInX
+/tests/ @OneInX
+/.github/ @OneInX
+/docs/ @OneInX

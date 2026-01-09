@@ -2,7 +2,7 @@
 
 ### Purpose
 
-This document defines MicroInX change control and versioning for the frozen v1.0 / v1.0.2 behavior surface.
+This document defines Manifest-InX change control and versioning for the frozen v1.0 / v1.0.x behavior surface.
 
 ### Versioning model (SemVer)
 
@@ -15,8 +15,8 @@ This document defines MicroInX change control and versioning for the frozen v1.0
 The following surfaces **must not change** without an explicit version bump and a written rationale in the PR:
 
 1) **Template surface v0.3**
-- `MicroInX Blade Insight Template Library v0.3.md` (canonical text)
-- `src/microinx/data/templates_v0_3.json` (derived mapping; exact strings)
+- `Manifest-InX InX-Zap Template Library v0.3.md` (canonical text)
+- `src/manifestinx/data/templates_v0_3.json` (derived mapping; exact strings)
 
 2) **SDT gate semantics** (tone + template fidelity)
 - Forbidden-token bans, sentence/word limits, interrogative bans, emoji/emoticon bans
@@ -27,11 +27,11 @@ The following surfaces **must not change** without an explicit version bump and 
 - Error shape `{error, detail?}`
 
 4) **Golden expected outputs (exact-match)**
-- `src/microinx/data/golden_cases_v*.json` content
-- `tests/test_microinx_golden_regression.py` behavior as an exact-match lock
+- `src/manifestinx/data/golden_cases_v*.json` content
+- `tests/test_manifestinx_golden_regression.py` behavior as an exact-match lock
 
 5) **Manifest integrity refusal behavior**
-- `microinx.run.verify_release()` / adapter startup integrity gate
+- `manifestinx.run.verify_release()` / adapter startup integrity gate
 - Hash mismatch results in refusal (no silent fallback)
 
 ### Allowed patch changes (examples)
@@ -72,8 +72,8 @@ Golden outputs are an exact-match stability lock for `{template_id, output_text,
   - Any frozen-surface change would alter outputs for any existing golden input.
 
 Golden version bump procedure:
-1) Create a new file `src/microinx/data/golden_cases_v<N>.json` with `golden_version: "v<N>"`.
-2) Update `tests/test_microinx_golden_regression.py` to point to the new file and enforce the new `golden_version`.
+1) Create a new file `src/manifestinx/data/golden_cases_v<N>.json` with `golden_version: "v<N>"`.
+2) Update `tests/test_manifestinx_golden_regression.py` to point to the new file and enforce the new `golden_version`.
 3) Record a one-line rationale in `GOLDEN.md` (Change Log section).
 
 ### Required evidence for changes
@@ -85,28 +85,27 @@ Every PR that touches code, templates, contract, golden, or manifest must includ
 ```bash
 python -m pip install -e . --no-deps
 
-python -m unittest -q \
-  tests/test_microinx_engine.py \
-  tests/test_microinx_api_smoke.py \
-  tests/test_microinx_api_contract.py \
-  tests/test_microinx_demo_smoke.py \
-  tests/test_microinx_golden_regression.py
+python -m unittest -q tests.test_manifestinx_engine
+python -m unittest -q tests.test_manifestinx_api_smoke
+python -m unittest -q tests.test_manifestinx_api_contract
+python -m unittest -q tests.test_manifestinx_demo_smoke
+python -m unittest -q tests.test_manifestinx_golden_regression
 
-MICROINX_DEMO_PORT=0 microinx-demo
+MANIFESTINX_DEMO_PORT=0 inxzap-demo
 ```
 
 2) **Manifest integrity check** (same environment):
 
 ```bash
 python - <<'PY'
-from microinx import run as microinx_run
-microinx_run.verify_release()
+from manifestinx import run as manifestinx_run
+manifestinx_run.verify_release()
 print('manifest_ok')
 PY
 ```
 
 ```powershell
-python -c "from microinx import run as microinx_run; microinx_run.verify_release(); print('manifest_ok')"
+python -c "from manifestinx import run as manifestinx_run; manifestinx_run.verify_release(); print('manifest_ok')"
 ```
 
 3) **PR includes**:

@@ -1,6 +1,6 @@
-# MicroInX API Contract (v1.0)
+# Manifest-InX API Contract (v1.0)
 
-This document freezes the external contract for the MicroInX Integration Adapter v1.0.
+This document freezes the external contract for the Manifest-InX Integration Adapter v1.0.
 
 ## Endpoints
 
@@ -9,7 +9,7 @@ This document freezes the external contract for the MicroInX Integration Adapter
 Response (200):
 
 - `status` (string) — always `"ok"`
-- `version` (string) — release version from the MicroInX manifest
+- `version` (string) — release version from the Manifest-InX manifest
 
 ### POST /insight
 
@@ -53,7 +53,7 @@ No RNG, no time-based behavior, and no external calls are permitted in the v1.0 
 
 ## Versioning rule
 
-- Contract file: `openapi_microinx_v1.yaml` is format-stable for v1.x.
+- Contract file: `openapi_manifestinx_v1.yaml` is format-stable for v1.x.
 - Release version is returned via `/health.version` and `manifest.version`.
 
 ## Release integrity (server refusal)

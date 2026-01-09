@@ -3,14 +3,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: Support
-    url: https://github.com/OneInX-Lab/BladeInsight/blob/main/SUPPORT.md
+    url: https://github.com/OneInX/Manifest-InX/blob/main/SUPPORT.md
     about: Usage and support.
   - name: Security
-    url: https://github.com/OneInX-Lab/BladeInsight/blob/main/SECURITY.md
+    url: https://github.com/OneInX/Manifest-InX/blob/main/SECURITY.md
     about: Security reporting policy.
   - name: Security Advisory
-    url: https://github.com/OneInX-Lab/BladeInsight/security/advisories/new
+    url: https://github.com/OneInX/Manifest-InX/security/advisories/new
     about: Private vulnerability report.
   - name: Feature Request
-    url: https://github.com/OneInX-Lab/BladeInsight/issues/new?template=feature_request.md
+    url: https://github.com/OneInX/Manifest-InX/issues/new?template=feature_request.md
     about: Submit feature request.
