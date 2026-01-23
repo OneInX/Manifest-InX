@@ -1,493 +1,135 @@
 # src/manifestinx/engine.py
-# ManifestInX Engine v1.0 — minimal deterministic skeleton (Sprint 1, low-compute)
-
 from __future__ import annotations
 
-import json
-import os
-import re
-import hashlib
-import importlib.resources as ilr
 from dataclasses import dataclass
+from typing import Any, Mapping, Optional, Sequence
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from .pack_system import PackHandle, ValidationReport, load_pack as _load_pack, validate_pack as _validate_pack
 
+import hashlib
 
-# --- Canonical templates (v0.3) loaded from package data (src/manifestinx/data/templates_v0_3.json) ---
-# Continuity rule: engine derives template_id → text from the packaged canonical file.
-# Optional integrity: if MANIFESTINX_TEMPLATES_SHA256 is set, engine refuses to run on mismatch.
-
-TEMPLATE_DATA_PKG = "manifestinx.data"
-TEMPLATE_DATA_FILE = "templates_v0_3.json"
-
-_TEMPLATES_CACHE: Optional[Dict[str, str]] = None
-
-
-def _sha256_hex(b: bytes) -> str:
-    return hashlib.sha256(b).hexdigest()
-
-
-def _load_templates_bytes() -> bytes:
-    # Primary: packaged resource (installed / editable installs)
-    try:
-        return ilr.files(TEMPLATE_DATA_PKG).joinpath(TEMPLATE_DATA_FILE).read_bytes()
-    except Exception:
-        # Fallback: local working directory (dev convenience)
-        return Path(TEMPLATE_DATA_FILE).read_bytes()
-
-
-def load_templates_v03() -> Dict[str, str]:
-    raw = _load_templates_bytes()
-
-    expected = os.environ.get("MANIFESTINX_TEMPLATES_SHA256", "").strip()
-    if expected and _sha256_hex(raw) != expected:
-        raise RuntimeError("Canonical templates hash mismatch")
-
-    obj = json.loads(raw.decode("utf-8"))
-
-    # Accept either {"T01": "...", ...} or a list of items with id/text.
-    templates: Dict[str, str] = {}
-    if isinstance(obj, dict):
-        templates = {str(k): str(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        for it in obj:
-            if not isinstance(it, dict):
-                continue
-            tid = it.get("template_id") or it.get("id") or it.get("tid")
-            txt = it.get("text") or it.get("template") or it.get("output_text")
-            if tid and txt:
-                templates[str(tid)] = str(txt)
-
-    if len(templates) != 15:
-        raise RuntimeError("Canonical templates parse failed")
-
-    return templates
-
-
-def get_templates() -> Dict[str, str]:
-    global _TEMPLATES_CACHE
-    if _TEMPLATES_CACHE is None:
-        _TEMPLATES_CACHE = load_templates_v03()
-    return _TEMPLATES_CACHE
-
-
-VECTORS = ("drift", "avoidance", "drive", "loop", "fracture")
-TIEBREAK = ("fracture", "avoidance", "loop", "drift", "drive")
-
-COMPOSITE_ALLOWED = {
-    ("drift", "loop"): "drift+loop",
-    ("avoidance", "loop"): "avoidance+loop",
-    ("drive", "fracture"): "drive+fracture",
-    ("drift", "avoidance"): "drift+avoidance",
-    ("drive", "loop"): "drive+loop",
-}
-COMPOSITE_TO_TEMPLATE = {
-    "drift+loop": "T11",
-    "avoidance+loop": "T12",
-    "drive+fracture": "T13",
-    "drift+avoidance": "T14",
-    "drive+loop": "T15",
-}
-DOMINANT_TO_TEMPLATE = {
-    "drift": ("T01", "T02"),
-    "avoidance": ("T03", "T04"),
-    "drive": ("T06", "T05"),
-    "loop": ("T08", "T07"),
-    "fracture": ("T10", "T09"),
-}
+# Core MUST be domain-agnostic:
+# - No product taxonomy (drift/avoidance/...)
+# - No implied template catalog (T01..T15)
+#
+# We keep a deterministic feature vector as a core primitive.
+FEATURE_DIMS: tuple[str, ...] = ("d01", "d02", "d03", "d04", "d05")
 
 
 @dataclass(frozen=True)
-class ExtractedSignals:
-    markers: Dict[str, List[str]]
-    counts: Dict[str, int]
-    scores: Dict[str, int]
+class CoreResult:
+    ok: bool
+    input_text: str
+    # Deterministic, stable ordering
+    feature_dim_order: tuple[str, ...]
+    feature_vector: tuple[float, ...]
+    dominant_dim: str
+    # Optional pack-defined identifier; core does not compute this
+    pack_identifier: Optional[str] = None
+    diagnostics: Optional[Mapping[str, Any]] = None
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "ok": self.ok,
+            "input_text": self.input_text,
+            "feature_dim_order": list(self.feature_dim_order),
+            "feature_vector": list(self.feature_vector),
+            "dominant_dim": self.dominant_dim,
+        }
+        if self.pack_identifier is not None:
+            out["pack_identifier"] = self.pack_identifier
+        if self.diagnostics is not None:
+            out["diagnostics"] = dict(self.diagnostics)
+        return out
 
 
-@dataclass(frozen=True)
-class MappedVectors:
-    dominant: str
-    secondary: Optional[str]
-    composite: Optional[str]
-    confidence: float
-
-
-_WORD = re.compile(r"\b[\w']+\b", re.UNICODE)
-_WS = re.compile(r"\s+")
-_SENT_SPLIT = re.compile(r"[.!]")
-_INTERROG_START = re.compile(r"^\s*(why|how|what|when|where|who)\b", re.I)
-_BULLET = re.compile(r"(^|\n)\s*(?:[-*]|\d+\.)\s+", re.M)
-_BECAUSE = re.compile(r"\bbecause\b", re.I)
-_PROFANITY = re.compile(r"\b(damn|shit|fuck)\b", re.I)  # proxy only
-
-
-def _tokenize(text: str) -> List[str]:
-    return _WORD.findall(text)
-
-
-def _count_sentences(text: str) -> int:
-    segs = [s.strip() for s in _SENT_SPLIT.split(text) if s.strip()]
-    return len(segs)
-
-
-def _find_phrases(text_l: str, phrases: List[str]) -> List[str]:
-    return [p for p in phrases if re.search(p, text_l, re.I)]
-
-
-def _count_word_hits(tokens_l: List[str], wordset: set[str]) -> int:
-    return sum(1 for t in tokens_l if t in wordset)
-
-
-def _detect_contradictions(text_l: str) -> int:
-    pairs = 0
-    if re.search(r"\bi want\b", text_l) and re.search(r"\bi (do not|don't) want\b", text_l):
-        pairs += 1
-    if re.search(r"\balways\b", text_l) and re.search(r"\bnever\b", text_l):
-        pairs += 1
-    if re.search(r"\bi will\b", text_l) and re.search(r"\bi can't\b", text_l):
-        pairs += 1
-    return pairs
-
-
-# Phrase markers (+2 each)
-DRIFT_PHRASES = [
-    r"\bnot now\b",
-    r"\bnext week\b",
-    r"\bneed more context\b",
-    r"\bkeep thinking\b",
-    r"\bmore research\b",
-    r"\bopen ended\b",
-    r"\bfigure out everything\b",
-]
-AVOID_PHRASES = [
-    r"\bno risk\b",
-    r"\bcannot fail\b",
-    r"\bbefore i start\b",
-    r"\bonly if\b",
-    r"\bneed all\b",
-    r"\bi will just\b",
-]
-DRIVE_PHRASES = [
-    r"\bjust do it\b",
-    r"\bfix later\b",
-    r"\bdoesn't matter\b",
-    r"\bin parallel\b",
-    r"\bsimultaneously\b",
-]
-LOOP_PHRASES = [
-    r"\bevery time\b",
-    r"\bback to\b",
-    r"\bno end\b",
-    r"\bnever done\b",
-    r"\bcan't finish\b",
-]
-FRACTURE_PHRASES = [
-    r"\bdefinition changes\b",
-    r"\btwo meanings\b",
-]
-
-# Word markers (+1 per token hit)
-DRIFT_WORDS = {
-    "later", "eventually", "someday", "after", "tomorrow", "once", "when",
-    "scope", "depends", "context", "research"
-}
-AVOID_WORDS = {"perfect", "exact", "certainty", "guarantee", "proof", "until", "must", "instead", "secondary"}
-DRIVE_WORDS = {"asap", "now", "today", "ship", "launch", "push", "fast", "rush", "deadline", "skip", "ignore"}
-LOOP_WORDS = {"again", "keep", "still", "same", "repeat", "restart", "revisit", "stuck"}
-FRACTURE_WORDS = {"but", "however", "yet", "although", "call", "label", "means"}
-
-
-def extract_signals(minimal_user_signal: Dict[str, Any]) -> ExtractedSignals:
-    raw = (minimal_user_signal or {}).get("raw_text", "") or ""
-    text = _WS.sub(" ", raw).strip()
-    text_l = text.lower()
-    tokens = _tokenize(text)
-    tokens_l = [t.lower() for t in tokens]
-
-    counts = {
-        "tokens": len(tokens),
-        "sentences": _count_sentences(text),
-        "question_marks": text.count("?"),
-        "bullets": len(_BULLET.findall(raw)),
-        "profanity": 1 if _PROFANITY.search(text) else 0,
-        "contradiction_pairs": _detect_contradictions(text_l),
-    }
-
-    markers: Dict[str, List[str]] = {v: [] for v in VECTORS}
-    scores: Dict[str, int] = {v: 0 for v in VECTORS}
-
-    # phrase hits
-    markers["drift"] = _find_phrases(text_l, DRIFT_PHRASES)
-    markers["avoidance"] = _find_phrases(text_l, AVOID_PHRASES)
-    markers["drive"] = _find_phrases(text_l, DRIVE_PHRASES)
-    markers["loop"] = _find_phrases(text_l, LOOP_PHRASES)
-    markers["fracture"] = _find_phrases(text_l, FRACTURE_PHRASES)
-
-    scores["drift"] += 2 * len(markers["drift"])
-    scores["avoidance"] += 2 * len(markers["avoidance"])
-    scores["drive"] += 2 * len(markers["drive"])
-    scores["loop"] += 2 * len(markers["loop"])
-    scores["fracture"] += 2 * len(markers["fracture"])
-
-    # word hits
-    scores["drift"] += _count_word_hits(tokens_l, DRIFT_WORDS)
-    scores["avoidance"] += _count_word_hits(tokens_l, AVOID_WORDS)
-    scores["drive"] += _count_word_hits(tokens_l, DRIVE_WORDS)
-    scores["loop"] += _count_word_hits(tokens_l, LOOP_WORDS)
-    scores["fracture"] += _count_word_hits(tokens_l, FRACTURE_WORDS)
-
-    # structural bonuses
-    if len(_BECAUSE.findall(text_l)) >= 3:
-        scores["drift"] += 2
-    if counts["bullets"] >= 3:
-        scores["drift"] += 1
-
-    if re.search(r"\b(perfect|100%|guarantee)\b", text_l):
-        scores["avoidance"] += 2
-    if re.search(r"\b(until|only if|before i)\b", text_l):
-        scores["avoidance"] += 2
-
-    if re.search(r"\b(asap|today|deadline|rush|ship|launch|now)\b", text_l):
-        scores["drive"] += 2
-    if re.search(r"\b(skip|ignore|fix later|doesn't matter)\b", text_l):
-        scores["drive"] += 2
-
-    unique_loop = {w for w in ("again", "restart", "repeat", "revisit", "every", "still", "same", "keep") if w in tokens_l}
-    if len(unique_loop) >= 2:
-        scores["loop"] += 2
-    if (("restart" in tokens_l) or ("again" in tokens_l)) and ("still" in tokens_l):
-        scores["loop"] += 2
-
-    contrast = sum(1 for w in ("but", "however", "yet", "although") if w in tokens_l)
-    if contrast >= 2:
-        scores["fracture"] += 2
-    if counts["contradiction_pairs"] > 0:
-        scores["fracture"] += 3
-
-    return ExtractedSignals(markers=markers, counts=counts, scores=scores)
-
-
-def score_vectors(signals: ExtractedSignals, raw_text: str) -> MappedVectors:
-    scores = signals.scores
-
-    if all(scores[v] == 0 for v in VECTORS):
-        return MappedVectors(dominant="drift", secondary=None, composite=None, confidence=0.0)
-
-    top = max(scores.values())
-    top_candidates = [v for v in VECTORS if scores[v] == top]
-    if len(top_candidates) > 1:
-        dominant = next(v for v in TIEBREAK if v in top_candidates)
-    else:
-        dominant = top_candidates[0]
-
-    remaining = sorted([(v, s) for v, s in scores.items() if v != dominant], key=lambda x: (-x[1], x[0]))
-    secondary = None
-    second_score = remaining[0][1] if remaining else 0
-    if remaining and second_score >= (scores[dominant] - 1) and second_score >= 3:
-        secondary = remaining[0][0]
-
-    short = len((raw_text or "").strip()) < 20
-    if short:
-        secondary = None
-
-    composite = None
-    if secondary is not None and scores[dominant] >= 3 and scores[secondary] >= 3:
-        key = (dominant, secondary)
-        if key in COMPOSITE_ALLOWED:
-            composite = COMPOSITE_ALLOWED[key]
-    if short:
-        composite = None
-
-    sorted_vals = sorted(scores.values(), reverse=True)
-    top_v = sorted_vals[0]
-    second_v = sorted_vals[1] if len(sorted_vals) > 1 else 0
-    confidence = (top_v - second_v + 1) / (top_v + 1)
-    confidence = max(0.0, min(1.0, confidence))
-    if short:
-        confidence = min(confidence, 0.4)
-
-    return MappedVectors(dominant=dominant, secondary=secondary, composite=composite, confidence=confidence)
-
-
-def select_template(vectors: MappedVectors, signals: ExtractedSignals, raw_text: str) -> str:
-    """Deterministic template selector.
-
-    Composites select directly.
-    Dominant vectors deterministically choose between the 2 per-vector variants.
+class Engine:
     """
-    if vectors.composite:
-        return COMPOSITE_TO_TEMPLATE[vectors.composite]
+    v2.0.0 core-only engine.
 
-    primary, variant = DOMINANT_TO_TEMPLATE[vectors.dominant]
+    Core responsibilities:
+    - deterministic canonicalization (if present elsewhere in your codebase)
+    - deterministic feature extraction (domain-agnostic)
+    - pack loading/validation via Pack System v0.1 (handled in engine facade or pack_system module)
 
-    # Global low-score fallback.
-    if signals.scores.get(vectors.dominant, 0) < 3:
-        return "T02"
+    Core explicitly does NOT:
+    - ship templates
+    - assume a template catalog
+    - map to product template IDs
+    """
 
-    t = (raw_text or "").lower()
+    def __init__(self) -> None:
+        # If you already have more init state, keep it.
+        pass
 
-    # Variant selection is intentionally simple + deterministic (no RNG, no time, no external state).
-    if vectors.dominant == "drift" and ("scope" in t or "definition" in t):
-        return variant
-    if vectors.dominant == "avoidance" and ("secondary" in t or "instead" in t):
-        return variant
-    if vectors.dominant == "drive" and ("skip" in t or "ignore" in t or "uncapped" in t):
-        return variant
-    if vectors.dominant == "loop" and ("trigger" in t or "back to" in t or "pathway" in t):
-        return variant
-    if vectors.dominant == "fracture" and ("constraint" in t or "competing" in t or "rule" in t):
-        return variant
+    # ---- pack-system façade (v0.1 local-only) ----
 
-    return primary
+    def validate_pack(self, path: str | Path) -> ValidationReport:
+        return _validate_pack(path)
 
+    def load_pack(self, path: str | Path) -> PackHandle:
+        return _load_pack(path)
 
-def render_output(template_id: str) -> str:
-    return get_templates()[template_id]
+    # ---- core deterministic feature extraction ----
 
+    def run_text(self, text: str, *, diagnostics: bool = False) -> dict[str, Any]:
+        """
+        Deterministically convert input text into a domain-agnostic feature vector.
 
-# --- SDT gate v1.0 (minimum set) ---
-_HARD_BAN_PATTERNS = [
-    r"\bmaybe\b",
-    r"\bfeel(ing|ings)?\b",
-    r"\bunderstand\b",
-    r"\bokay\b",
-    r"\bok\b",
-    r"\bsorry\b",
-    r"it\s*(is|'s)\s*okay",
-    r"\bempathy\b",
-    r"\bcompassion\b",
-    r"\bcomfort(ing)?\b",
-    r"\breassur(e|ing|ance)\b",
-    r"\bsupport(ive)?\b",
-    r"\bheal(ing)?\b",
-    r"\byou\s*'?re\s*not\s*alone\b",
-    r"\bshould(n'?t)?\b",
-    r"\btry\b",
-    r"\bconsider\b",
-    r"\bsuggest\b",
-    r"\brecommend\b",
-    r"\badvisable\b",
-    r"\btips?\b",
-    r"\bguidance\b",
-    r"\bhelp(ful)?\b",
-    r"\bneed\s*to\b",
-    r"\banxiety\b",
-    r"\bdepress(ed|ion)?\b",
-    r"\bstress(ed)?\b",
-    r"\btrauma\b",
-    r"\bptsd\b",
-    r"\btherap(y|ist)\b",
-    r"\bmental\b",
-    r"\bemotion\w*\b",
-    r"\bmindset\b",
-    r"\bmotivation\b",
-    r"\bself-esteem\b",
-    r"\bego\b",
-    r"\bcoping\b",
-    r"\bsubconscious\b",
-    r"\bdisclaimer\b",
-    r"\bnot\s*medical\b",
-    r"\bnot\s*legal\b",
-    r"\bnot\s*financial\b",
-    r"\bconsult\b",
-    r"\bprofessional\b",
-    r"\bhotline\b",
-    r"\bcrisis\b",
-    r"\bpolicy\b",
-    r"\blet\s*'?s\b",
-    r"\bbuddy\b",
-    r"\blol\b",
-    r"\bhaha\b",
-    r"ㅋㅋ",
-]
-_REVIEW_FLAG_PATTERNS = [
-    r"\bmust\b", r"\bbest\b", r"\bbetter\b", r"\bworse\b", r"\bideal(ly)?\b",
-    r"\bgood\b", r"\bbad\b", r"\bwe\b", r"\bi\b"
-]
-_EMOTICONS = (":)", ":(", ";)")
+        NOTE:
+        - No template_id is produced by core.
+        - Any mapping to pack-specific identifiers must be performed by pack-defined pipeline logic.
+        """
+        input_text = text if isinstance(text, str) else str(text)
 
+        vec = self._compute_feature_vector(input_text)
+        dominant_idx = max(range(len(vec)), key=lambda i: vec[i])
+        dominant_dim = FEATURE_DIMS[dominant_idx]
 
-def _contains_emoji(s: str) -> bool:
-    for ch in s:
-        o = ord(ch)
-        if (0x1F300 <= o <= 0x1FAFF) or (0x2600 <= o <= 0x26FF) or (0x2700 <= o <= 0x27BF):
-            return True
-    return False
+        diag: Optional[dict[str, Any]] = None
+        if diagnostics:
+            diag = {
+                "feature_dim_count": len(FEATURE_DIMS),
+                "dominant_index": dominant_idx,
+            }
 
-
-def sdt_gate(output_text: str, template_id: str) -> Dict[str, Any]:
-    violations: List[str] = []
-
-    templates = get_templates()
-
-    if template_id not in templates:
-        return {"pass": False, "violations": ["TEMPLATE_ID_UNKNOWN"]}
-
-    if output_text != templates[template_id]:
-        violations.append("EXACT_TEMPLATE_MISMATCH")
-
-    sent_n = _count_sentences(output_text)
-    if sent_n < 1 or sent_n > 2:
-        violations.append("SENTENCE_COUNT")
-
-    if len(_tokenize(output_text)) > 40:
-        violations.append("WORD_COUNT")
-
-    if "?" in output_text:
-        violations.append("QUESTION_MARK")
-    if _INTERROG_START.search(output_text):
-        violations.append("INTERROGATIVE_START")
-
-    out_l = output_text.lower()
-    for pat in _HARD_BAN_PATTERNS:
-        if re.search(pat, out_l, re.I):
-            violations.append(f"FORBIDDEN:{pat}")
-            break
-
-    for pat in _REVIEW_FLAG_PATTERNS:
-        if re.search(pat, out_l, re.I):
-            violations.append(f"FLAG:{pat}")
-
-    if _contains_emoji(output_text):
-        violations.append("EMOJI")
-    if any(e in output_text for e in _EMOTICONS):
-        violations.append("EMOTICON")
-
-    hard_fail = any(
-        v.startswith(
-            (
-                "EXACT_TEMPLATE_MISMATCH",
-                "SENTENCE_COUNT",
-                "WORD_COUNT",
-                "QUESTION_MARK",
-                "INTERROGATIVE_START",
-                "FORBIDDEN:",
-                "EMOJI",
-                "EMOTICON",
-                "TEMPLATE_ID_UNKNOWN",
-            )
+        result = CoreResult(
+            ok=True,
+            input_text=input_text,
+            feature_dim_order=FEATURE_DIMS,
+            feature_vector=tuple(vec),
+            dominant_dim=dominant_dim,
+            diagnostics=diag,
         )
-        for v in violations
-    )
-    return {"pass": (not hard_fail), "violations": violations}
+        return result.to_dict()
 
+    def _compute_feature_vector(self, input_text: str) -> Sequence[float]:
+        """
+        Deterministic, domain-agnostic feature vector.
 
-def generate_blade_insight(minimal_user_signal: Dict[str, Any]) -> Dict[str, Any]:
-    signals = extract_signals(minimal_user_signal)
-    raw = (minimal_user_signal or {}).get("raw_text", "") or ""
-    vectors = score_vectors(signals, raw_text=raw)
-    template_id = select_template(vectors, signals, raw_text=raw)
-    output_text = render_output(template_id)
-    sdt = sdt_gate(output_text, template_id)
-    return {
-        "template_id": template_id,
-        "output_text": output_text,
-        "mapped_vectors": {
-            "dominant": vectors.dominant,
-            "secondary": vectors.secondary,
-            "composite": vectors.composite,
-            "confidence": vectors.confidence,
-        },
-        "sdt": sdt,
-        "debug": {"signals": {"markers": signals.markers, "counts": signals.counts, "scores": signals.scores}},
-    }
+        Uses sha256 over raw UTF-8 bytes of the input text and converts the digest
+        into a fixed-length numeric vector in a stable way.
+
+        - No product taxonomy
+        - No template mapping
+        - No external deps
+        """
+        b = input_text.encode("utf-8")
+        digest = hashlib.sha256(b).digest()  # 32 bytes
+
+        # Turn digest into 5 stable dimensions using 4-byte chunks.
+        # (20 bytes used, leaving the remainder unused by design.)
+        vals = []
+        for i in range(5):
+            chunk = digest[i * 4 : (i + 1) * 4]
+            n = int.from_bytes(chunk, "big", signed=False)
+            vals.append(n)
+
+        total = sum(vals)
+        if total == 0:
+            return [0.0] * 5
+
+        # Normalize to a probability-like vector for stable downstream use
+        return [v / total for v in vals]
+        # ---- END ----

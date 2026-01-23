@@ -1,0 +1,16 @@
+{
+  "pack_kind": "test_fixture",
+  "description": "Synthetic payload for Pack System v0.1 tests. No domain semantics.",
+  "dimensions": ["d01", "d02", "d03", "d04", "d05"],
+  "labels": {
+    "d01": "dim_01",
+    "d02": "dim_02",
+    "d03": "dim_03",
+    "d04": "dim_04",
+    "d05": "dim_05"
+  },
+  "notes": [
+    "This file exists only to test pack loading + sha256 pin validation.",
+    "It must not encode product logic or template catalogs."
+  ]
+}

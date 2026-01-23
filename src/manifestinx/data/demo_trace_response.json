@@ -1,6 +1,0 @@
-{
-  "manifest": {"hash_ok": true, "version": "1.0.0"},
-  "output_text": "You defer by letting a weak definition trigger repeated interpretation. An unfrozen definition regenerates recurrence.",
-  "sdt": {"pass": true, "violations": []},
-  "template_id": "T11"
-}

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manifestinx"
-version = "1.0.0"
-description = "Manifest-InX v1.0 (deterministic engine + adapter + inxzap wrapper)"
+version = "2.0.0"
+description = "Manifest-InX deterministic engine (core-only) with Pack System v0.1"
 requires-python = ">=3.10"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -13,21 +13,20 @@ authors = [{name = "OneInX-Lab"}]
 classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
 ]
 
 dependencies = []
 
 [project.urls]
-# Update after the new repo is created.
 Repository = "https://github.com/OneInX/Manifest-InX"
 
 [project.scripts]
-inxzap-demo   = "inxzap.demo:main"
-manifestinx-demo = "inxzap.compat:manifestinx_demo_main"
+manifestinx = "manifestinx.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["manifestinx", "manifestinx.*"]
 
 [tool.setuptools.package-data]
-# Wheel-safe: ship manifest + templates inside the installed package.
-"manifestinx" = ["data/*.json", "py.typed"]
+"manifestinx" = ["schemas/*.json", "py.typed"]

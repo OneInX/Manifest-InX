@@ -1,23 +1,33 @@
-# SECURITY.md
+# Security Policy
 
-## Reporting a vulnerability
+## Supported Versions
 
-Please report security vulnerabilities privately using GitHub’s private vulnerability reporting / Security Advisories for this repository.
+Security updates are provided for:
 
-Include:
+- **v2.x** (current major line)
 
-- a clear description of the issue
-- impact assessment
-- reproduction steps or proof of concept
-- affected versions/commit if known
+Older versions may not receive security fixes.
 
-## Response expectations
+## Reporting a Vulnerability
 
-- Initial acknowledgment: within 7 days
-- Status updates: as material progress occurs
+If you believe you have found a security vulnerability in Manifest-InX, please report it.
 
-## Not in scope
+**Preferred:** Use **GitHub Security Advisories** (Report a vulnerability).
 
-- Support requests
-- Usage questions
-- Feature requests
+**Alternative:** If you are unable to use Security Advisories, open a GitHub issue and include the label `security`.
+
+When reporting, please include:
+- A clear description of the issue
+- Steps to reproduce (if possible)
+- Affected version(s)
+- Any relevant logs or proof-of-concept code
+
+Reports will be reviewed and investigated in good faith.
+
+## Scope
+
+This policy applies **only** to the Manifest-InX core engine.
+
+It does **not** cover:
+- Third-party packs, templates, or extensions
+- Downstream applications built using Manifest-InX

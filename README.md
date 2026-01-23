@@ -1,78 +1,87 @@
-# README.md
+# Manifest-InX
 
 [![CI](https://github.com/OneInX/Manifest-InX/actions/workflows/manifestinx_ci.yml/badge.svg)](https://github.com/OneInX/Manifest-InX/actions/workflows/manifestinx_ci.yml)
 [![Release](https://img.shields.io/github/v/release/OneInX/Manifest-InX)](https://github.com/OneInX/Manifest-InX/releases)
 [![License](https://img.shields.io/github/license/OneInX/Manifest-InX)](https://github.com/OneInX/Manifest-InX/blob/main/LICENSE)
 
+## v2.0.0 — Core-only SDK surface
 
-## Manifest-InX
+Manifest-InX is a deterministic engine core for contract-validated execution of structured outputs.
 
-Manifest-InX is a deterministic post-AI execution layer that maps minimal user text into one ultra-compressed **InX-Zap** output using a fixed five-vector model (drift, avoidance, drive, loop, fracture) and a frozen template surface. SDT enforces exact template fidelity and hard bans.
+Core responsibilities:
+- Deterministic canonicalization of inputs
+- Contract validation (schema + invariants) with reproducible failures
+- Auditability (hash-pinned artifacts and reproducible serialization)
+- Pack System v0.1 (local-only): load and validate enterprise-owned packs
 
-## Status
+Example (pack-defined):
+Depending on the pack, outputs may include deterministic intermediates such as stable identifiers or feature maps.
+Core does not ship or assume any template catalog or vector taxonomy.
 
-Frozen surface (v1.0.0): templates v0.3, SDT gate, OpenAPI contract, golden outputs, and release manifest.
+This repository **ships only the domain-agnostic engine core**.
 
-## What it is not
+### What does not ship in core
+- No product apps/examples in the public install surface
+- No bundled product templates/packs
 
-Manifest-InX is not:
-- therapy
-- counseling
-- coaching
-- advice
-- psychology
-- emotional support
+## Usage
 
-## Quick start
+Recommended: call `validate_pack()` first to obtain a report; only load packs that validate cleanly.
 
-### Install (editable)
+```python
+from manifestinx.engine import Engine
 
-python -m pip install -e . --no-deps
+engine = Engine()
 
-### Run one-command demo
+# Validate a local, hash-pinned pack (no network loading in v0.1)
+report = engine.validate_pack("./path/to/pack")
+if not report.ok:
+    raise ValueError("Pack validation failed: " + "; ".join(i.message for i in report.issues))
+
+# Load only after validation succeeds (recommended)
+pack = engine.load_pack("./path/to/pack")
+```
+
+### Pack System v0.1 (local-only)
+
+A pack is a local directory containing a `pack_manifest.json` that pins every file by `sha256`.
+`validate_pack()` checks schema validity, path safety (no `..` / absolute paths), and sha256 pins computed over the referenced files’ **raw bytes** (no newline normalization or text transforms) for every listed file.
+
+#### `pack_manifest.json` (v0.1)
+
+Schema:
+- Repo: `src/manifestinx/schemas/pack_manifest_v0_1.json`
+- Installed (within site-packages): `manifestinx/schemas/pack_manifest_v0_1.json`
+
+Required:
+- `schema_version`: `"pack_manifest_v0.1"`
+- `pack_id`: string
+- `files`: map of `relpath -> sha256_hex` (raw bytes)
+
+Optional (accepted for type/format only in v0.1):
+- `version`: SemVer-like string
+- `engine_compat`: `{ "min_version": "...", "max_version": "..." }`
+- `entrypoints`: map of `name -> relpath` (relpath must be present in `files`)
+
+## Install
 
 ```bash
-inxzap-demo
+python -m pip install manifestinx
 ```
+
+## CLI
 
 ```bash
-MANIFESTINX_DEMO_PORT=0 inxzap-demo
+manifestinx --help
+manifestinx pack validate ./path/to/pack
 ```
+(Validates local packs only in v0.1; no network loading.)
 
-```powershell
-$env:MANIFESTINX_DEMO_PORT=0; inxzap-demo
-```
+## Determinism
 
-If you are not using the console script:
-
-```bash
-python -m inxzap.demo
-```
-
-### Run tests
-
-```bash
-python -m unittest -q tests.test_manifestinx_engine
-python -m unittest -q tests.test_manifestinx_api_smoke
-python -m unittest -q tests.test_manifestinx_api_contract
-python -m unittest -q tests.test_manifestinx_demo_smoke
-python -m unittest -q tests.test_manifestinx_golden_regression
-```
-
-## Contract
-
-- OpenAPI: `openapi_manifestinx_v1.yaml`
-- Contract notes: `API_CONTRACT.md`
-
-## Determinism and integrity
-
-- Determinism: identical input text yields identical `{template_id, output_text, sdt}`.
-- Template fidelity: SDT requires `output_text` to exactly match the selected canonical template.
-- Forbidden-token gate: SDT rejects forbidden tokens/phrases (hard bans).
-- Release integrity: `src/manifestinx/data/manifestinx_manifest_v1.json` is verified at runtime; hash mismatch triggers refusal.
-- Regression lock: `src/manifestinx/data/golden_cases_v1.json` + `tests/test_manifestinx_golden_regression.py` enforce exact-match stability.
+- Determinism guarantee: identical inputs + the same validated pack (or no pack) produce identical canonicalization artifacts, validation decisions, and outputs defined by the pack-defined pipeline (including reproducible failures).
+- Domain-specific behavior (templates, renderers, transforms, etc.) occurs only when a validated pack supplies pinned content and pack-provided entrypoints.
 
 ## Version
 
-- This repo ships the `manifestinx` distribution and the `manifestinx` engine module.
-- See `pyproject.toml` for the authoritative version.
+See `pyproject.toml` for the authoritative version.

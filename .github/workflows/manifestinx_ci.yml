@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
+  test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -24,25 +24,47 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install (editable, local-only)
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Install package (editable, local-only)
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
           PIP_NO_PYTHON_VERSION_WARNING: "1"
         run: |
           python -m pip install -e . --no-deps
 
-      - name: Fast deterministic tests (explicit)
+      - name: Unit tests
         env:
           PYTHONUTF8: "1"
         run: |
-          python -m unittest -q tests/test_manifestinx_engine.py
-          python -m unittest -q tests/test_manifestinx_api_smoke.py
-          python -m unittest -q tests/test_manifestinx_api_contract.py
-          python -m unittest -q tests/test_manifestinx_demo_smoke.py
-          python -m unittest -q tests/test_manifestinx_golden_regression.py
+          python -m unittest discover -s tests -p "test*.py" -q
 
-      - name: One-command demo (ephemeral port)
-        env:
-          MANIFESTINX_DEMO_PORT: "0"
+      - name: CLI smoke
         run: |
-          inxzap-demo
+          manifestinx --help
+          manifestinx pack validate tests/fixtures/test_pack
+          manifestinx pack validate tests/fixtures/test_pack --json | python -m json.tool > /dev/null
+
+      - name: Build wheel/sdist
+        run: |
+          python -m build
+
+      - name: Strip sdist (remove forbidden contents)
+        run: |
+          python - <<'PY'
+          import glob, sys
+          files = sorted(glob.glob("dist/*.tar.gz"))
+          if not files:
+            print("No sdist found in dist/")
+            sys.exit(1)
+          print("Stripping:", files[0])
+          PY
+          python -c "import glob; print(sorted(glob.glob('dist/*.tar.gz'))[0])" > dist/_sdist_path.txt
+          python tools/strip_sdist.py "$(cat dist/_sdist_path.txt)"
+
+      - name: Lint repo + artifacts (core-only policy)
+        run: |
+          python tools/lint_release.py --artifacts dist
