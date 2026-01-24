@@ -1,0 +1,17 @@
+{
+  "schema_version": "pack_manifest_v0.1",
+  "pack_id": "test_pack",
+  "version": "0.0.1",
+  "engine_compat": {
+    "min_version": "2.0.0"
+  },
+  "files": {
+    "payload.json": "a8e392e3fa25efbb125c2c494a68ef3d195be64b742070d1f20761b66bd6a9a3"
+  },
+  "entrypoints": {
+    "payload": "payload.json"
+  },
+  "metadata": {
+    "note": "Synthetic test pack for Manifest-InX pack-system v0.1"
+  }
+}

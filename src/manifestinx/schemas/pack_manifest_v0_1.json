@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Manifest-InX Pack Manifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pack_id", "files"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "pack_manifest_v0.1"
+    },
+    "pack_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([\\-\\+][A-Za-z0-9\\.\\-]+)?$"
+    },
+    "engine_compat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([\\-\\+][A-Za-z0-9\\.\\-]+)?$"
+        },
+        "max_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([\\-\\+][A-Za-z0-9\\.\\-]+)?$"
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "description": "Map of relative path to sha256 hex of raw file bytes",
+      "propertyNames": {
+        "type": "string",
+        "allOf": [
+          {"pattern": "^[A-Za-z0-9][A-Za-z0-9_\\.\\-/]*$"},
+          {"not": {"pattern": "^/"}},
+          {"not": {"pattern": "\\.\\."}},
+          {"not": {"pattern": ":"}},
+          {"not": {"pattern": "\\\\\\\\"}}
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "entrypoints": {
+      "type": "object",
+      "description": "Named entrypoints into pinned files",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_\\-]{1,64}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "allOf": [
+          {"pattern": "^[A-Za-z0-9][A-Za-z0-9_\\.\\-/]*$"},
+          {"not": {"pattern": "^/"}},
+          {"not": {"pattern": "\\.\\."}},
+          {"not": {"pattern": ":"}},
+          {"not": {"pattern": "\\\\\\\\"}}
+        ]
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

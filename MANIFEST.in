@@ -1,8 +1,26 @@
-recursive-include src/manifestinx/data *.json
+include pyproject.toml
+include README.md
+include LICENSE
 
-# Optional: ship contract/demo docs alongside source dist.
-include openapi_manifestinx_v1.yaml
-include API_CONTRACT.md
-include DEMO.md
-include ADAPTER_QUICKSTART.md
-include QUICKSTART.md
+recursive-include src/manifestinx *.py
+recursive-include src/manifestinx/schemas *.json
+include src/manifestinx/py.typed
+
+# Defensive: ensure non-core never lands in sdist even if accidentally re-added
+prune src/inxzap
+prune src/manifestinx/data
+
+prune tests
+prune .github
+prune dist
+prune build
+prune .venv
+
+# Exclude common build/cache dirs explicitly
+prune __pycache__
+prune .pytest_cache
+prune *.egg-info
+
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude .DS_Store
