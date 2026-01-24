@@ -4,9 +4,9 @@
 [![Release](https://img.shields.io/github/v/release/OneInX/Manifest-InX)](https://github.com/OneInX/Manifest-InX/releases)
 [![License](https://img.shields.io/github/license/OneInX/Manifest-InX)](https://github.com/OneInX/Manifest-InX/blob/main/LICENSE)
 
-## v2.0.0 — Core-only SDK surface
+## v2.0.0 — Core-only post-AI execution engine
 
-Manifest-InX is a deterministic engine core for contract-validated execution of structured outputs.
+Manifest-InX is a deterministic **post-AI execution engine** for contract-validated execution of structured outputs.
 
 Core responsibilities:
 - Deterministic canonicalization of inputs
