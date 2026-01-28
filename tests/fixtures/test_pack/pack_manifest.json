@@ -3,7 +3,7 @@
   "pack_id": "test_pack",
   "version": "0.0.1",
   "engine_compat": {
-    "min_version": "2.0.0"
+    "min_version": "2.0.1"
   },
   "files": {
     "payload.json": "a8e392e3fa25efbb125c2c494a68ef3d195be64b742070d1f20761b66bd6a9a3"

@@ -1,75 +1,67 @@
-# Manifest-InX v2.x — Determinism Contract (Core Engine)
+# Manifest-InX — Determinism
 
-This document defines what “deterministic” means for the Manifest-InX v2.x **core-only** engine and Pack System v0.1.
+This document defines determinism guarantees for the **core engine**.
 
-## Scope
+> Core determinism is about **reproducible transforms** and **provable artifacts**.
+> It is not about forcing probabilistic models to behave deterministically.
 
-This contract applies to:
+---
 
-- Core engine fingerprint output for a given input text
-- Pack validation decisions (schema + sha256 pins)
-- Pack file reads via `PackHandle`
+## 1) Determinism boundary
 
-This contract does NOT define any domain semantics. Packs may attach domain meaning downstream.
+Manifest-InX Core guarantees determinism for:
 
-## Deterministic Core Fingerprint
+- Pack validation / gating (contract-first)
+- Canonicalization of supported data types
+- Stable serialization rules for proof targets
+- Hashing rules that bind artifacts to:
+  - input subsets
+  - config subsets (explicit defaults)
+  - pack references + pack sha256s
+  - engine version
 
-For a given input string `text`, the core engine produces a deterministic feature fingerprint:
+Core does NOT guarantee determinism for:
 
-- Input bytes: `text` encoded as UTF-8 bytes
-- Digest: `sha256(input_bytes)`
-- Output vector: a stable 5-dimensional distribution over dimension IDs:
-  - `d01`, `d02`, `d03`, `d04`, `d05`
-- Dominant dimension: the max-weight dimension ID (`dominant_dim`)
+- any external provider generation (LLMs, diffusion, etc.)
+- any network calls, timestamps, or environment-dependent behavior
+- semantic identity of future “live” generations
 
-The stable fingerprint output consists of: `feature_dim_order`, `feature_vector`, `dominant_dim` (and optional `diagnostics`).
+---
 
-No meaning is implied by dimension IDs. They are stable identifiers; packs may interpret them.
+## 2) Proof targets
 
-### Determinism guarantee (core)
+A “proof target” is a canonical byte sequence that must be identical under the same deterministic conditions.
 
-Given the same:
-- `text` (exact same Unicode string)
-Note: the core does not apply Unicode normalization; callers must provide identical strings to obtain identical fingerprints.
-- core engine version (same `manifestinx` build)
+Core philosophy:
+- Golden tests should assert **canonical artifact bytes** (and pinned hashes)
+- Avoid “outer envelopes” that include volatile metadata (timestamps, debug info)
 
-The produced fingerprint (`d01..d05` + `dominant_dim`) is identical.
+---
 
-## Pack System v0.1 (Local Path Only)
+## 3) Deterministic identity
 
-v0.1 supports **local path** packs only.
+Core artifacts should support stable identity derivation without timestamps, typically from:
+- canonicalized deterministic input subset
+- deterministic config subset
+- pack sha256s
+- engine version
 
-A pack is a directory containing:
+This enables:
+- stable deduplication
+- regression referencing
+- long-lived reproducibility
 
-- `pack_manifest.json` at pack root
-- The files referenced in the manifest
+---
 
-### Pack manifest validation
+## 4) How this relates to enterprise replay
 
-`validate_pack(pack_root)` is deterministic:
+Enterprises typically require:
+- reproduce “what happened” exactly later
+- audits, incident reviews, compliance checks
+- governed change across model/policy upgrades
 
-1) Schema validation of `pack_manifest.json` (Pack Manifest v0.1).
-2) Safety checks on paths (relative only; no `..`; no absolute paths).
-3) Hash-pin validation:
-   - For each `relpath` in `files`, compute `sha256(raw_file_bytes)`
-   - Compare against the pinned hex digest in the manifest
+Those requirements are fulfilled by **Capture + Replay** at the SDK layer (not part of this repo), not by core alone.
 
-### Determinism guarantee (pack validation)
-
-Given the same:
-- pack directory contents (raw bytes)
-- pack_manifest.json (raw bytes)
-- manifest schema (v0.1)
-- core engine version (same `manifestinx` build)
-
-`validate_pack` produces the same `ValidationReport` (ok + issues) every time.
-
-### Pack loading
-
-`load_pack(pack_root)` requires `validate_pack` to pass, then returns a read-only `PackHandle`.
-Reads via `PackHandle.read_bytes/read_text/read_json` are deterministic for the same on-disk bytes.
-
-## No Network
-
-Pack System v0.1 performs **no network** loading. All inputs are local filesystem paths.
-
+See:
+- `AI_INTEGRATION.md`
+- `DETERMINISM_BOUNDARY.md`

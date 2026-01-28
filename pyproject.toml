@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manifestinx"
-version = "2.0.0"
+version = "2.0.1"
 description = "Manifest-InX deterministic engine (core-only) with Pack System v0.1"
 requires-python = ">=3.10"
 readme = "README.md"

@@ -1,4 +1,4 @@
-"""Manifest-InX core package (v2.0.0).
+"""Manifest-InX core package (v2.0.1).
 
 Public surface (core-only):
 - Engine (domain-agnostic deterministic core)
