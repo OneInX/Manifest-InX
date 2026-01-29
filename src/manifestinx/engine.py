@@ -46,7 +46,7 @@ class CoreResult:
 
 class Engine:
     """
-    v2.0.0 core-only engine.
+    v2.0.1 core-only engine.
 
     Core responsibilities:
     - deterministic canonicalization (if present elsewhere in your codebase)

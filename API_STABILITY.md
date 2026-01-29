@@ -1,4 +1,4 @@
-# Manifest-InX v2.x — API Stability (Core Engine)
+# Manifest-InX — API Stability
 
 This repository is the **core-only**, **domain-agnostic** Manifest-InX engine with Pack System v0.1.
 It is the foundation for enterprise SDK work, but it is not itself the enterprise SDK.

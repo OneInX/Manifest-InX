@@ -1,4 +1,4 @@
-# Security Policy
+# Manifest-InX — Security Policy
 
 ## Supported Versions
 
